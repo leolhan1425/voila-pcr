@@ -1,7 +1,10 @@
 import quantstudio from './quantstudio'
+import bioradCfx from './biorad-cfx'
+import lightcycler from './lightcycler'
 import genericCsv from './generic-csv'
 
-const parsers = [quantstudio, genericCsv]
+// Order matters: specific formats first, generic CSV last as fallback
+const parsers = [quantstudio, bioradCfx, lightcycler, genericCsv]
 
 /**
  * Try each parser's detect() in order. First match wins.
