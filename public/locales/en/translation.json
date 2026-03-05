@@ -1,0 +1,78 @@
+{
+  "brand": "VoilaPCR",
+  "brandAccent": "Voila",
+  "brandMono": "PCR",
+  "tagline": "Raw data in. Clean results out.",
+  "upload": {
+    "title": "Raw data in.\nClean results out.",
+    "subtitle": "Upload your qPCR spreadsheet from any machine. Get ddCt analysis, publication-ready graphs, and a clean CSV. All in your browser — your data never leaves.",
+    "dropzone": "Drop your spreadsheet here",
+    "dropzoneOr": "or click to browse",
+    "formats": ".xlsx, .xls, or .csv — QuantStudio, CFX, LightCycler, and more",
+    "privacy": "Your data never leaves your browser",
+    "requestFormat": "Don't see your machine?",
+    "requestFormatCta": "Upload a sample spreadsheet and we'll add support for it.",
+    "parsing": "Parsing your file...",
+    "detected": "Detected: {{instrument}}",
+    "wells": "{{count}} wells",
+    "targets": "{{count}} targets",
+    "samples": "{{count}} samples",
+    "continue": "Configure Analysis"
+  },
+  "configure": {
+    "title": "Configure analysis",
+    "method": "Analysis Method",
+    "methodDdct": "ddCt (Livak)",
+    "referenceGene": "Reference Gene",
+    "controlGroup": "Control Group",
+    "replicateHandling": "Replicate Handling",
+    "autoAverage": "Auto-average technical replicates",
+    "outlierThreshold": "Outlier threshold (Ct deviation)",
+    "analyze": "Voila — Analyze",
+    "back": "Back to upload"
+  },
+  "results": {
+    "title": "Voila. Your results.",
+    "dataTable": "Data Table",
+    "chart": "Chart",
+    "downloadCsv": "Download CSV",
+    "exportSvg": "Export SVG",
+    "exportPng": "Export PNG (300 DPI)",
+    "startOver": "Analyze another file",
+    "sample": "Sample",
+    "target": "Target",
+    "ct": "Ct",
+    "refCt": "Ref Ct",
+    "dCt": "dCt",
+    "ddCt": "ddCt",
+    "foldChange": "Fold Change",
+    "group": "Group",
+    "mean": "Mean",
+    "sem": "SEM",
+    "n": "n",
+    "pValue": "p-value",
+    "errorBars": "Error Bars",
+    "semOption": "SEM",
+    "sdOption": "SD",
+    "showDataPoints": "Show data points",
+    "yAxisLabel": "Relative Expression (Fold Change)"
+  },
+  "requestModal": {
+    "title": "Request machine support",
+    "email": "Email address",
+    "machine": "Machine / instrument name",
+    "file": "Sample spreadsheet (optional)",
+    "notes": "Notes (optional)",
+    "submit": "Submit request",
+    "thanks": "Thanks! We'll add support for {{machine}} and email you when it's ready."
+  },
+  "steps": {
+    "upload": "Upload",
+    "configure": "Configure",
+    "results": "Results"
+  },
+  "footer": {
+    "tagline": "Built for scientists who'd rather be in the lab.",
+    "privacy": "100% client-side — your data never leaves your browser."
+  }
+}
