@@ -13,6 +13,17 @@ const useStore = create((set) => ({
   parsedData: null,
   setParsedData: (parsedData) => set({ parsedData }),
 
+  // Sample roles: { sampleName: 'experimental' | 'ntc' | 'standard' }
+  sampleRoles: {},
+  setSampleRoles: (sampleRoles) => set({ sampleRoles }),
+  setSampleRole: (sample, role) => set((s) => ({
+    sampleRoles: { ...s.sampleRoles, [sample]: role },
+  })),
+
+  // QC report
+  qcReport: null,
+  setQcReport: (qcReport) => set({ qcReport }),
+
   // Analysis config
   config: {
     method: 'ddct',
@@ -20,6 +31,7 @@ const useStore = create((set) => ({
     controlGroup: null,
     autoAverage: true,
     outlierThreshold: 0.5,
+    dilutionFactor: 10,
   },
   setConfig: (updates) => set((s) => ({
     config: { ...s.config, ...updates },
@@ -33,12 +45,15 @@ const useStore = create((set) => ({
   reset: () => set({
     step: 'upload',
     parsedData: null,
+    sampleRoles: {},
+    qcReport: null,
     config: {
       method: 'ddct',
       referenceGene: null,
       controlGroup: null,
       autoAverage: true,
       outlierThreshold: 0.5,
+      dilutionFactor: 10,
     },
     results: null,
   }),

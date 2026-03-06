@@ -3,8 +3,12 @@ import { useTranslation } from 'react-i18next'
 import useStore from '../../store/useStore'
 import DataTable from './DataTable'
 import BarChart from './BarChart'
+import QCSummary from './QCSummary'
 import ExportCSV from './ExportCSV'
 import ExportGraph from './ExportGraph'
+
+const TABS = ['chart', 'dataTable', 'qc']
+const TAB_LABELS = { chart: 'Chart', dataTable: 'Data Table', qc: 'QC Report' }
 
 export default function ResultsPanel() {
   const { t } = useTranslation()
@@ -21,7 +25,7 @@ export default function ResultsPanel() {
 
       {/* Tabs */}
       <div className="mt-6 flex gap-1 border-b border-border dark:border-border-dark">
-        {['chart', 'dataTable'].map((key) => (
+        {TABS.map((key) => (
           <button
             key={key}
             onClick={() => setTab(key)}
@@ -31,7 +35,7 @@ export default function ResultsPanel() {
                 : 'border-transparent text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
             }`}
           >
-            {t(`results.${key}`)}
+            {TAB_LABELS[key]}
           </button>
         ))}
       </div>
@@ -40,6 +44,7 @@ export default function ResultsPanel() {
       <div className="mt-6">
         {tab === 'chart' && <BarChart />}
         {tab === 'dataTable' && <DataTable />}
+        {tab === 'qc' && <QCSummary />}
       </div>
 
       {/* Export buttons */}

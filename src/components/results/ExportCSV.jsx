@@ -13,9 +13,9 @@ export default function ExportCSV() {
 
     for (const row of results.rows) {
       csvRows.push([
-        row.sample,
-        row.target,
-        row.group,
+        quoteCSV(row.sample),
+        quoteCSV(row.target),
+        quoteCSV(row.group),
         row.ct?.toFixed(2) ?? '',
         row.refCt?.toFixed(2) ?? '',
         row.dCt?.toFixed(3) ?? '',
@@ -24,21 +24,70 @@ export default function ExportCSV() {
       ].join(','))
     }
 
-    // Add summary section
+    // Summary section
     csvRows.push('')
-    csvRows.push('--- Summary ---')
+    csvRows.push('--- Group Summary ---')
     csvRows.push('Target,Group,Mean Fold Change,SEM,SD,n')
 
     for (const [target, groups] of Object.entries(results.summary)) {
       for (const [group, stats] of Object.entries(groups)) {
         csvRows.push([
-          target,
-          group,
+          quoteCSV(target),
+          quoteCSV(group),
           stats.mean?.toFixed(3) ?? '',
           stats.sem?.toFixed(3) ?? '',
           stats.sd?.toFixed(3) ?? '',
           stats.n,
         ].join(','))
+      }
+    }
+
+    // Statistics section
+    if (results.statistics && Object.keys(results.statistics).length > 0) {
+      csvRows.push('')
+      csvRows.push('--- Statistical Tests ---')
+      csvRows.push('Target,Comparison,Test,p-value,Significance')
+      for (const [target, groups] of Object.entries(results.statistics)) {
+        for (const [group, stat] of Object.entries(groups)) {
+          csvRows.push([
+            quoteCSV(target),
+            `Control vs ${group}`,
+            stat.test,
+            stat.pValue?.toExponential(3) ?? '',
+            stat.stars,
+          ].join(','))
+        }
+      }
+    }
+
+    // QC section
+    if (results.qcReport) {
+      const qc = results.qcReport
+      csvRows.push('')
+      csvRows.push('--- Quality Control ---')
+      csvRows.push(`Overall QC,${qc.overall}`)
+
+      if (Object.keys(qc.standardCurve).length > 0) {
+        csvRows.push('')
+        csvRows.push('Target,R2,Slope,Efficiency (%),Y-Intercept,Points')
+        for (const [target, sc] of Object.entries(qc.standardCurve)) {
+          csvRows.push([
+            quoteCSV(target),
+            sc.r2?.toFixed(4) ?? '',
+            sc.slope?.toFixed(3) ?? '',
+            sc.efficiency?.toFixed(1) ?? '',
+            sc.intercept?.toFixed(2) ?? '',
+            sc.dynamicRange,
+          ].join(','))
+        }
+      }
+
+      if (qc.flags.length > 0) {
+        csvRows.push('')
+        csvRows.push('QC Flags')
+        for (const flag of qc.flags) {
+          csvRows.push(`${flag.severity},${quoteCSV(flag.message)}`)
+        }
       }
     }
 
@@ -59,4 +108,9 @@ export default function ExportCSV() {
       {t('results.downloadCsv')}
     </button>
   )
+}
+
+function quoteCSV(val) {
+  const s = String(val ?? '')
+  return s.includes(',') || s.includes('"') ? `"${s.replace(/"/g, '""')}"` : s
 }
