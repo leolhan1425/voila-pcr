@@ -5,6 +5,7 @@ import { autoClassifySamples, runQC } from '../../analysis/qc'
 import { analyzeDdct } from '../../analysis/ddct'
 import SampleClassifier from './SampleClassifier'
 import QCReport from './QCReport'
+import WellExclusion from './WellExclusion'
 
 export default function ConfigPanel() {
   const { t } = useTranslation()
@@ -44,7 +45,7 @@ export default function ConfigPanel() {
     // Filter data to experimental samples only
     const filteredData = {
       ...parsedData,
-      wells: parsedData.wells.filter((w) => sampleRoles[w.sample] === 'experimental'),
+      wells: parsedData.wells.filter((w) => sampleRoles[w.sample] === 'experimental' && !w._excluded),
       samples: expSamples,
       groups: expGroups,
     }
@@ -85,6 +86,9 @@ export default function ConfigPanel() {
 
       {/* QC Report */}
       {qcReport && <QCReport />}
+
+      {/* Well Exclusion */}
+      <WellExclusion />
 
       <hr className="my-8 border-border dark:border-border-dark" />
 

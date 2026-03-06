@@ -1,44 +1,48 @@
 import { useTranslation } from 'react-i18next'
 import Plotly from 'plotly.js-dist-min'
+import useStore from '../../store/useStore'
 
 export default function ExportGraph() {
   const { t } = useTranslation()
+  const { results } = useStore()
 
-  const exportSvg = () => {
-    const chartEl = document.getElementById('voila-chart')?.querySelector('.js-plotly-plot')
-    if (!chartEl) return
-    Plotly.downloadImage(chartEl, {
-      format: 'svg',
-      filename: 'voilapcr-chart',
-    })
-  }
+  const targets = results ? Object.keys(results.summary) : []
 
-  const exportPng = () => {
-    const chartEl = document.getElementById('voila-chart')?.querySelector('.js-plotly-plot')
-    if (!chartEl) return
-    // 300 DPI at 3.5 inches wide = 1050px
-    Plotly.downloadImage(chartEl, {
-      format: 'png',
-      width: 1050,
-      height: 750,
-      scale: 3, // 300 DPI effective resolution
-      filename: 'voilapcr-chart',
-    })
+  const exportAll = (format) => {
+    for (const target of targets) {
+      const container = document.getElementById(`voila-chart-${target}`)
+      const chartEl = container?.querySelector('.js-plotly-plot')
+      if (!chartEl) continue
+
+      const opts = {
+        format,
+        filename: `voilapcr-${target}`,
+      }
+
+      if (format === 'png') {
+        // 300 DPI at 3.5 inches = 1050px
+        opts.width = 1050
+        opts.height = 750
+        opts.scale = 3
+      }
+
+      Plotly.downloadImage(chartEl, opts)
+    }
   }
 
   return (
     <>
       <button
-        onClick={exportSvg}
+        onClick={() => exportAll('svg')}
         className="px-6 py-2 text-sm font-medium border border-accent text-accent hover:bg-accent hover:text-white rounded-lg transition-colors"
       >
-        {t('results.exportSvg')}
+        {t('results.exportSvg')}{targets.length > 1 ? ` (${targets.length})` : ''}
       </button>
       <button
-        onClick={exportPng}
+        onClick={() => exportAll('png')}
         className="px-6 py-2 text-sm font-medium border border-accent text-accent hover:bg-accent hover:text-white rounded-lg transition-colors"
       >
-        {t('results.exportPng')}
+        {t('results.exportPng')}{targets.length > 1 ? ` (${targets.length})` : ''}
       </button>
     </>
   )
