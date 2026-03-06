@@ -2,8 +2,11 @@ import * as XLSX from 'xlsx'
 import { inferGroups } from './types'
 
 /**
- * QuantStudio parser — handles .xlsx exports from QuantStudio 3/5/6/7.
- * Looks for a "Results" sheet with columns: Well, Well Position, Sample Name, Target Name, CT
+ * QuantStudio parser — handles .xls/.xlsx exports from QuantStudio 3/5/6/7.
+ *
+ * Real-world QuantStudio exports have 40+ rows of calibration/instrument metadata
+ * before the actual data header row in the Results sheet. This parser scans for
+ * the header row dynamically.
  */
 const quantstudio = {
   name: 'QuantStudio',
@@ -18,15 +21,28 @@ const quantstudio = {
     )
     if (!resultsSheet) return false
 
-    // Check for QuantStudio-specific column headers
+    // Scan for QuantStudio fingerprints in metadata rows or the header row
     const sheet = workbook.Sheets[resultsSheet]
-    const rows = XLSX.utils.sheet_to_json(sheet, { defval: '' })
-    if (rows.length === 0) return false
+    const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '', header: 1 })
 
-    const headers = Object.keys(rows[0]).map((h) => h.toLowerCase().trim())
-    const needed = ['well position', 'sample name', 'target name']
-    const hasCtCol = headers.some((h) => h === 'ct' || h === 'cт' || h === 'cq')
-    return needed.every((n) => headers.some((h) => h.includes(n.replace(' ', ' ')))) && hasCtCol
+    for (let i = 0; i < Math.min(rawRows.length, 60); i++) {
+      const row = rawRows[i]
+      if (!row) continue
+
+      // Check for QuantStudio instrument name in metadata
+      const rowStr = row.map((c) => String(c).toLowerCase()).join(' ')
+      if (rowStr.includes('quantstudio') || rowStr.includes('quantstudio')) return true
+
+      // Check for the data header row with expected columns
+      const strs = row.map((c) => String(c).toLowerCase().trim())
+      const hasSample = strs.some((s) => s === 'sample name')
+      const hasTarget = strs.some((s) => s === 'target name')
+      const hasCt = strs.some((s) => s === 'ct' || s === 'cт' || s === 'cq')
+      const hasWell = strs.some((s) => s === 'well' || s === 'well position')
+      if (hasSample && hasTarget && hasCt && hasWell) return true
+    }
+
+    return false
   },
 
   parse(fileData, fileName) {
@@ -35,46 +51,75 @@ const quantstudio = {
       (n) => n.toLowerCase() === 'results'
     )
     const sheet = workbook.Sheets[resultsSheet]
+    const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '', header: 1 })
 
-    // QuantStudio files often have metadata rows before the actual data header.
-    // We need to find the row that contains the actual column headers.
-    const rawRows = XLSX.utils.sheet_to_json(sheet, { defval: '' })
+    // Find the actual data header row by scanning for key column names
+    let headerIdx = -1
+    for (let i = 0; i < Math.min(rawRows.length, 80); i++) {
+      const row = rawRows[i]
+      if (!row) continue
+      const strs = row.map((c) => String(c).toLowerCase().trim())
+      const hasSample = strs.some((s) => s === 'sample name')
+      const hasTarget = strs.some((s) => s === 'target name')
+      const hasCt = strs.some((s) => s === 'ct' || s === 'cт' || s === 'cq')
+      if (hasSample && hasTarget && hasCt) {
+        headerIdx = i
+        break
+      }
+    }
 
-    // Normalize headers: find the key mapping
-    const headerMap = {}
-    const firstRow = rawRows[0]
-    for (const key of Object.keys(firstRow)) {
-      const lower = key.toLowerCase().trim()
-      if (lower === 'well' && !headerMap.well) headerMap.well = key
-      if (lower === 'well position') headerMap.wellPosition = key
-      if (lower === 'sample name') headerMap.sample = key
-      if (lower === 'target name') headerMap.target = key
-      if (lower === 'ct' || lower === 'cт' || lower === 'cq') headerMap.ct = key
-      if (lower === 'task') headerMap.task = key
-      if (lower === 'quantity') headerMap.quantity = key
+    if (headerIdx < 0) {
+      return { wells: [], metadata: { instrument: 'QuantStudio', plateSize: 96, exportDate: '', fileName: fileName || '' }, targets: [], samples: [], groups: [] }
+    }
+
+    // Build column index mapping from the header row
+    const headerRow = rawRows[headerIdx]
+    const colIdx = {}
+    for (let c = 0; c < headerRow.length; c++) {
+      const name = String(headerRow[c]).toLowerCase().trim()
+      if (name === 'well' && colIdx.well == null) colIdx.well = c
+      if (name === 'well position') colIdx.wellPosition = c
+      if (name === 'sample name') colIdx.sample = c
+      if (name === 'target name') colIdx.target = c
+      if (name === 'ct' || name === 'cт' || name === 'cq') colIdx.ct = c
+      if (name === 'task') colIdx.task = c
+      if (name === 'quantity') colIdx.quantity = c
+    }
+
+    // Extract instrument name from metadata if available
+    let instrument = 'QuantStudio'
+    for (let i = 0; i < headerIdx; i++) {
+      const row = rawRows[i]
+      if (row && String(row[0]).toLowerCase().includes('instrument type')) {
+        instrument = String(row[1]).trim().replace(/[™®]/g, '') || 'QuantStudio'
+        break
+      }
     }
 
     const wells = []
     const targetsSet = new Set()
     const samplesSet = new Set()
 
-    for (const row of rawRows) {
-      const sample = String(row[headerMap.sample] || '').trim()
-      const target = String(row[headerMap.target] || '').trim()
+    for (let i = headerIdx + 1; i < rawRows.length; i++) {
+      const row = rawRows[i]
+      if (!row) continue
+
+      const sample = String(row[colIdx.sample] ?? '').trim()
+      const target = String(row[colIdx.target] ?? '').trim()
       if (!sample || !target) continue
 
-      const ctRaw = row[headerMap.ct]
+      const ctRaw = row[colIdx.ct]
       const ct = ctRaw === 'Undetermined' || ctRaw === '' || ctRaw == null
         ? null
         : parseFloat(ctRaw)
 
       wells.push({
-        well: String(row[headerMap.wellPosition] || row[headerMap.well] || '').trim(),
+        well: String(row[colIdx.wellPosition] ?? row[colIdx.well] ?? '').trim(),
         sample,
         target,
         ct: isNaN(ct) ? null : ct,
-        quantity: headerMap.quantity ? parseFloat(row[headerMap.quantity]) || null : null,
-        taskType: String(row[headerMap.task] || 'UNKNOWN').toUpperCase(),
+        quantity: colIdx.quantity != null ? parseFloat(row[colIdx.quantity]) || null : null,
+        taskType: String(row[colIdx.task] ?? 'UNKNOWN').toUpperCase(),
       })
 
       targetsSet.add(target)
@@ -87,7 +132,7 @@ const quantstudio = {
     return {
       wells,
       metadata: {
-        instrument: 'QuantStudio',
+        instrument,
         plateSize: wells.length > 96 ? 384 : 96,
         exportDate: '',
         fileName: fileName || '',

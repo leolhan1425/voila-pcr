@@ -13,8 +13,15 @@ export default function DropZone() {
 
   const handleFile = useCallback(async (file) => {
     setError(null)
-    setParsing(true)
 
+    // Check for .eds files (native QuantStudio format — not a spreadsheet)
+    const ext = file.name.split('.').pop().toLowerCase()
+    if (ext === 'eds') {
+      setError('eds')
+      return
+    }
+
+    setParsing(true)
     try {
       const result = await parseFile(file)
       if (result.error) {
@@ -84,7 +91,7 @@ export default function DropZone() {
         <input
           ref={inputRef}
           type="file"
-          accept=".xlsx,.xls,.csv"
+          accept=".xlsx,.xls,.csv,.eds"
           onChange={onChange}
           className="hidden"
         />
@@ -104,7 +111,9 @@ export default function DropZone() {
 
       {error && (
         <div className="mt-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg text-sm text-red-700 dark:text-red-300">
-          {error === 'unrecognized'
+          {error === 'eds'
+            ? 'The .eds file is the native QuantStudio project file and cannot be read directly. Please export from QuantStudio as .xls or .xlsx: File → Export → Results (Excel).'
+            : error === 'unrecognized'
             ? 'Could not auto-detect your file format. Please check the file or try a CSV export.'
             : error
           }
