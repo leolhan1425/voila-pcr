@@ -6,7 +6,7 @@ export default function ExportGraph() {
   const { t } = useTranslation()
   const { results } = useStore()
 
-  const targets = results ? Object.keys(results.summary) : []
+  const targets = results?.summary ? Object.keys(results.summary) : []
 
   const exportAll = (format) => {
     for (const target of targets) {

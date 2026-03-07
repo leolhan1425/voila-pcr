@@ -75,8 +75,18 @@ export default function ResultsPanel() {
           <div className="space-y-6">
             <BarChart />
             <GraphCustomizer
-              target={results.summary?.[0]?.target || ''}
-              onUpdate={(settings) => setGraphSettings(settings.target, settings)}
+              target={Object.keys(results.summary || {})[0] || ''}
+              onUpdate={(settings) => setGraphSettings(settings.target, {
+                font: `${settings.fontFamily}, sans-serif`,
+                fontSize: settings.fontSize,
+                width: settings.width,
+                height: settings.height,
+                yScale: settings.yScale,
+                showBrackets: settings.showSignificance,
+                xLabel: settings.xAxisLabel,
+                yLabel: settings.yAxisLabel,
+                colors: Object.values(settings.groupColors || {}),
+              })}
             />
             <div className="flex flex-wrap gap-3">
               <ExportGraph />

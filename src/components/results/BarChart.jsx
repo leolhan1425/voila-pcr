@@ -2,38 +2,23 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import LazyPlot from './LazyPlot'
 import useStore from '../../store/useStore'
-import GraphCustomizer from './GraphCustomizer'
 
 const GRAY_PALETTE = [
   '#1a1a1a', '#666666', '#999999', '#bbbbbb', '#dddddd',
   '#444444', '#777777', '#aaaaaa', '#cccccc',
 ]
 
-const JOURNAL_PRESETS = {
-  nature: { font: 'Arial', fontSize: 7, width: 3.5, height: 2.5 },
-  cell: { font: 'Helvetica', fontSize: 8, width: 3.4, height: 2.5 },
-  plos: { font: 'Arial', fontSize: 8, width: 5.2, height: 3.5 },
-}
-
 export default function BarChart() {
   const { t } = useTranslation()
-  const { results, config, tier, graphSettings, setShowUpgradePrompt } = useStore()
+  const { results, config, graphSettings } = useStore()
   const [errorBarType, setErrorBarType] = useState('sem')
   const [showDataPoints, setShowDataPoints] = useState(true)
-  const [showCustomizer, setShowCustomizer] = useState(false)
 
   if (!results) return null
 
-  const { summary, statistics } = results
+  const summary = results.summary || {}
+  const statistics = results.statistics || {}
   const targets = Object.keys(summary)
-
-  const handleToggleCustomizer = () => {
-    if (tier === 'free') {
-      setShowUpgradePrompt('graphCustomizer')
-      return
-    }
-    setShowCustomizer(!showCustomizer)
-  }
 
   return (
     <div className="space-y-10">
@@ -59,36 +44,7 @@ export default function BarChart() {
           />
           <span className="text-text-secondary dark:text-text-secondary-dark">Show individual data points</span>
         </label>
-        <button
-          onClick={handleToggleCustomizer}
-          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border dark:border-border-dark rounded-lg hover:border-accent transition-colors"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
-          </svg>
-          {t('results.customize')}
-          {tier === 'free' && <span className="text-[10px] px-1 py-0.5 bg-accent/10 text-accent rounded">Pro</span>}
-        </button>
       </div>
-
-      {showCustomizer && tier !== 'free' && (
-        <GraphCustomizer
-          target="_global"
-          onUpdate={(settings) => {
-            useStore.getState().setGraphSettings('_global', {
-              font: `${settings.fontFamily}, sans-serif`,
-              fontSize: settings.fontSize,
-              width: settings.width,
-              height: settings.height,
-              yScale: settings.yScale,
-              showBrackets: settings.showSignificance,
-              xLabel: settings.xAxisLabel,
-              yLabel: settings.yAxisLabel,
-              colors: Object.values(settings.groupColors || {}),
-            })
-          }}
-        />
-      )}
 
       {/* One chart per target gene */}
       {targets.map((target) => (

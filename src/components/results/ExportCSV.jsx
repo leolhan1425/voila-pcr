@@ -11,7 +11,7 @@ export default function ExportCSV() {
     const headers = ['Sample', 'Target', 'Group', 'Ct', 'Ref Ct', 'dCt', 'ddCt', 'Fold Change']
     const csvRows = [headers.join(',')]
 
-    for (const row of results.rows) {
+    for (const row of (results.rows || [])) {
       csvRows.push([
         quoteCSV(row.sample),
         quoteCSV(row.target),
@@ -29,7 +29,7 @@ export default function ExportCSV() {
     csvRows.push('--- Group Summary ---')
     csvRows.push('Target,Group,Mean Fold Change,SEM,SD,n')
 
-    for (const [target, groups] of Object.entries(results.summary)) {
+    for (const [target, groups] of Object.entries(results.summary || {})) {
       for (const [group, stats] of Object.entries(groups)) {
         csvRows.push([
           quoteCSV(target),
@@ -67,7 +67,7 @@ export default function ExportCSV() {
       csvRows.push('--- Quality Control ---')
       csvRows.push(`Overall QC,${qc.overall}`)
 
-      if (Object.keys(qc.standardCurve).length > 0) {
+      if (qc.standardCurve && Object.keys(qc.standardCurve).length > 0) {
         csvRows.push('')
         csvRows.push('Target,R2,Slope,Efficiency (%),Y-Intercept,Points')
         for (const [target, sc] of Object.entries(qc.standardCurve)) {
@@ -82,7 +82,7 @@ export default function ExportCSV() {
         }
       }
 
-      if (qc.flags.length > 0) {
+      if (qc.flags && qc.flags.length > 0) {
         csvRows.push('')
         csvRows.push('QC Flags')
         for (const flag of qc.flags) {

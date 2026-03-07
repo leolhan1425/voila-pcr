@@ -18,14 +18,14 @@ export default function PricingPage() {
       key: 'free',
       price: t('pricing.free.price'),
       period: t('pricing.free.period'),
-      features: t('pricing.free.features', { returnObjects: true }),
+      features: t('pricing.free.features', { returnObjects: true }) || [],
       current: tier === 'free',
     },
     {
       key: 'pro',
       price: annual ? t('pricing.pro.priceAnnual') : t('pricing.pro.priceMonthly'),
       period: annual ? t('pricing.pro.periodAnnual') : t('pricing.pro.periodMonthly'),
-      features: t('pricing.pro.features', { returnObjects: true }),
+      features: t('pricing.pro.features', { returnObjects: true }) || [],
       current: tier === 'pro',
       highlighted: true,
     },
@@ -33,7 +33,7 @@ export default function PricingPage() {
       key: 'lab',
       price: t('pricing.lab.price'),
       period: t('pricing.lab.period'),
-      features: t('pricing.lab.features', { returnObjects: true }),
+      features: t('pricing.lab.features', { returnObjects: true }) || [],
       current: tier === 'lab',
     },
   ]
@@ -83,7 +83,7 @@ export default function PricingPage() {
             </div>
 
             <ul className="mt-6 space-y-3">
-              {plan.features.map((feature, i) => (
+              {(Array.isArray(plan.features) ? plan.features : []).map((feature, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm">
                   {CHECK}
                   <span>{feature}</span>

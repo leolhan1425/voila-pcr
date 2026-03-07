@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, Component } from 'react'
 import useStore from './store/useStore'
 import Header from './components/layout/Header'
 import Footer from './components/layout/Footer'
@@ -38,6 +38,35 @@ function getBlogSlug() {
   if (path === '/blog') return null
   const match = path.match(/^\/blog\/(.+)$/)
   return match ? match[1] : null
+}
+
+class ErrorBoundary extends Component {
+  constructor(props) {
+    super(props)
+    this.state = { hasError: false, error: null }
+  }
+  static getDerivedStateFromError(error) {
+    return { hasError: true, error }
+  }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="max-w-lg mx-auto px-6 py-20 text-center">
+          <h2 className="font-display text-2xl font-bold">Something went wrong</h2>
+          <p className="mt-3 text-sm text-text-secondary dark:text-text-secondary-dark">
+            {this.state.error?.message}
+          </p>
+          <button
+            onClick={() => { this.setState({ hasError: false, error: null }); window.location.href = '/' }}
+            className="mt-6 px-6 py-2 bg-accent hover:bg-accent-hover text-white rounded-lg text-sm transition-colors"
+          >
+            Go back to home
+          </button>
+        </div>
+      )
+    }
+    return this.props.children
+  }
 }
 
 export default function App() {
@@ -85,7 +114,9 @@ export default function App() {
     <div className={darkMode ? 'dark' : ''}>
       <div className="min-h-screen bg-warm-bg text-text-primary dark:bg-warm-bg-dark dark:text-text-primary-dark transition-colors">
         <Header navigate={navigate} />
+        <ErrorBoundary>
         {renderPage()}
+        </ErrorBoundary>
         <Footer navigate={navigate} />
 
         {/* Global overlays */}

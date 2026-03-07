@@ -32,7 +32,7 @@ export default function DataTable() {
           </tr>
         </thead>
         <tbody>
-          {results.rows.map((row, i) => (
+          {(results.rows || []).map((row, i) => (
             <tr key={i} className="border-b border-border/50 dark:border-border-dark/50 hover:bg-surface dark:hover:bg-surface-dark">
               {columns.map((col) => (
                 <td key={col.key} className="px-3 py-2">

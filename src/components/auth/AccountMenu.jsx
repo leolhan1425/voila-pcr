@@ -2,16 +2,18 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import useAuth from '../../hooks/useAuth'
 import useTier from '../../hooks/useTier'
+import useStore from '../../store/useStore'
 import LoginModal from './LoginModal'
 
 /**
  * Account menu dropdown for the header.
  * Shows sign-in button when logged out, or user info + tier badge when logged in.
  */
-export default function AccountMenu({ onOpenPricing }) {
+export default function AccountMenu() {
   const { t } = useTranslation()
   const { user, signOut } = useAuth()
   const { tier } = useTier()
+  const { setShowPricing } = useStore()
 
   const [showLogin, setShowLogin] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
@@ -77,7 +79,7 @@ export default function AccountMenu({ onOpenPricing }) {
                 <button
                   onClick={() => {
                     setMenuOpen(false)
-                    onOpenPricing?.()
+                    setShowPricing(true)
                   }}
                   className="w-full text-left px-4 py-2 text-sm text-accent hover:bg-warm-bg dark:hover:bg-warm-bg-dark transition-colors"
                 >
@@ -88,7 +90,7 @@ export default function AccountMenu({ onOpenPricing }) {
               <button
                 onClick={() => {
                   setMenuOpen(false)
-                  onOpenPricing?.()
+                  setShowPricing(true)
                 }}
                 className="w-full text-left px-4 py-2 text-sm hover:bg-warm-bg dark:hover:bg-warm-bg-dark transition-colors"
               >
