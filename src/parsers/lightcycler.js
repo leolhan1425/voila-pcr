@@ -111,8 +111,16 @@ function buildParsedData(headers, dataRows, fileName) {
   for (const row of dataRows) {
     if (!row || row.length === 0) continue
 
-    const sample = String(row[idx.sample] || '').trim()
-    const target = idx.target >= 0 ? String(row[idx.target] || '').trim() : 'Target'
+    let sample = String(row[idx.sample] || '').trim()
+    let target = idx.target >= 0 ? String(row[idx.target] || '').trim() : ''
+
+    // LightCycler often combines sample and target in the Name column as "Sample - Target"
+    if (!target && sample.includes(' - ')) {
+      const parts = sample.split(' - ')
+      sample = parts[0].trim()
+      target = parts.slice(1).join(' - ').trim()
+    }
+    if (!target) target = 'Target'
     if (!sample) continue
 
     const cpRaw = row[idx.cp]

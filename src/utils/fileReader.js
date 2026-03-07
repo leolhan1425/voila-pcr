@@ -12,6 +12,28 @@ export async function readFile(file) {
   if (ext === 'csv' || ext === 'txt') {
     const text = await file.text()
     const result = Papa.parse(text, { header: true, skipEmptyLines: true })
+
+    // Many instrument exports have metadata rows before the real header.
+    // PapaParse picks the first line as headers, which is wrong in those cases.
+    // Detect this: if PapaParse found very few fields, find the real header row.
+    if (result.meta.fields && result.meta.fields.length <= 2 && result.data.length > 3) {
+      const noHeader = Papa.parse(text, { header: false, skipEmptyLines: true })
+      let maxCols = 0
+      let headerIdx = 0
+      for (let i = 0; i < Math.min(noHeader.data.length, 30); i++) {
+        if (noHeader.data[i].length > maxCols) {
+          maxCols = noHeader.data[i].length
+          headerIdx = i
+        }
+      }
+      if (maxCols > 2) {
+        const lines = text.split(/\r?\n/)
+        const dataText = lines.slice(headerIdx).join('\n')
+        const reParsed = Papa.parse(dataText, { header: true, skipEmptyLines: true })
+        return { type: 'csv', rows: reParsed.data, raw: text, meta: reParsed.meta }
+      }
+    }
+
     return { type: 'csv', rows: result.data, raw: text, meta: result.meta }
   }
 
