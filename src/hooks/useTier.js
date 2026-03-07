@@ -1,45 +1,41 @@
 import { create } from 'zustand'
-import { isProFeature } from '../utils/featureGate'
-import { getMonthlyUsage, FREE_TIER_LIMIT } from '../api/usage'
+import { isProFeature, hasAccess } from '../utils/featureGate'
+import { isDemoMode } from '../utils/demoMode'
 
 /**
  * Tier store — tracks the current user's subscription tier.
- *
- * TODO: Sync with Stripe subscription status via backend API.
- * For now, defaults to 'free' and can be changed manually for testing.
+ * In demo mode, everything is unlocked.
  */
 const useTierStore = create((set) => ({
   tier: 'free', // 'free' | 'pro' | 'lab'
   setTier: (tier) => set({ tier }),
 }))
 
-/**
- * Hook that returns tier info and feature gates.
- */
 export default function useTier() {
   const tier = useTierStore((s) => s.tier)
   const setTier = useTierStore((s) => s.setTier)
 
-  /**
-   * Check if a specific analysis method is available for this tier.
-   * ddCt is always available; pfaffl, genorm, standardCurve require Pro.
-   */
+  const demo = isDemoMode()
+  const effectiveTier = demo ? 'pro' : tier
+
   const canUseMethod = (method) => {
     if (method === 'ddct') return true
-    if (tier === 'pro' || tier === 'lab') return true
+    if (demo || tier === 'pro' || tier === 'lab') return true
     return false
   }
 
-  const isPaidTier = tier === 'pro' || tier === 'lab'
+  const isPaidTier = demo || tier === 'pro' || tier === 'lab'
 
   return {
-    tier,
+    tier: effectiveTier,
+    rawTier: tier,
     setTier,
     canUseMethod,
     canUseGraphCustomizer: isPaidTier,
     canUseDrQPCR: isPaidTier,
     canSeeFullQC: isPaidTier,
-    remainingAnalyses: isPaidTier ? Infinity : Math.max(0, FREE_TIER_LIMIT - getMonthlyUsage()),
-    isProFeature,
+    isProFeature: (feature) => isProFeature(feature),
+    hasAccess: (feature) => hasAccess(feature, effectiveTier),
+    isDemoMode: demo,
   }
 }

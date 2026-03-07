@@ -1,5 +1,27 @@
 const ENTRIES = [
   {
+    date: '2026-03-07',
+    version: '3.0',
+    title: 'v3: Full sales landing page, unlimited free tier, templates, and more',
+    changes: [
+      'New 8-section sales landing page with inline drop zone',
+      'Free tier now has unlimited analyses (no monthly cap)',
+      'Free QC report shows first diagnostic card expanded, rest blurred',
+      'Added Prism .pzfx export for GraphPad compatibility (Pro)',
+      'Added saved analysis templates — save and reuse configurations',
+      'Added persistent feedback buttons (format requests + ideas)',
+      'Added citation feature with one-click copy',
+      'Added referral share prompt after results',
+      'Added Privacy Policy, About, and Blog pages',
+      'Added 3 SEO blog posts (DDCt guide, troubleshooting, reference genes)',
+      'Added DEMO_MODE environment variable for demo deployments',
+      'Added Science journal preset to graph customizer',
+      'Added ABI StepOne, Rotor-Gene Q, Stratagene Mx, Eppendorf realplex, Mic qPCR parsers',
+      'Updated results layout with tab-based navigation (Results, Figures, QC Report)',
+      'Added admin dashboard for format requests and feedback',
+    ],
+  },
+  {
     date: '2026-03-06',
     version: '2.0',
     title: 'Major update: Pro features, Dr. qPCR, and more',

@@ -37,9 +37,9 @@ const SEVERITY_STYLES = {
   },
 }
 
-export default function DiagnosticCard({ issue }) {
+export default function DiagnosticCard({ issue, defaultExpanded = false }) {
   const { t } = useTranslation()
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(defaultExpanded)
 
   const style = SEVERITY_STYLES[issue.severity] || SEVERITY_STYLES.caution
 

@@ -1,27 +1,38 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import useStore from '../../store/useStore'
+import useTier from '../../hooks/useTier'
 import DataTable from './DataTable'
 import BarChart from './BarChart'
 import ExportCSV from './ExportCSV'
 import ExportGraph from './ExportGraph'
-import QCSummaryBadge from '../qc/QCSummaryBadge'
+import ExportPrism from './ExportPrism'
+import GraphCustomizer from './GraphCustomizer'
+import QCFreePreview from '../qc/QCFreePreview'
 import QCFullReport from '../qc/QCFullReport'
 import QCRunner from '../qc/QCRunner'
 
-const TABS = ['chart', 'dataTable', 'qc']
+const TABS = ['results', 'figures', 'qc']
 
 export default function ResultsPanel() {
   const { t } = useTranslation()
-  const { results, reset, tier } = useStore()
-  const [tab, setTab] = useState('chart')
+  const store = useStore()
+  const { results, reset, setGraphSettings } = store
+  const { canSeeFullQC } = useTier()
+  const [tab, setTab] = useState('results')
+  const [showShareBanner, setShowShareBanner] = useState(true)
 
   if (!results) return null
 
   const tabLabels = {
-    chart: t('results.chart'),
-    dataTable: t('results.dataTable'),
-    qc: t('results.qcReport'),
+    results: t('results.dataTable', 'Results'),
+    figures: t('results.chart', 'Figures'),
+    qc: t('results.qcReport', 'QC Report'),
+  }
+
+  const copyReferralLink = () => {
+    const link = `${window.location.origin}/ref/share`
+    navigator.clipboard.writeText(link)
   }
 
   return (
@@ -51,17 +62,34 @@ export default function ResultsPanel() {
 
       {/* Content */}
       <div className="mt-6">
-        {tab === 'chart' && <BarChart />}
-        {tab === 'dataTable' && <DataTable />}
+        {tab === 'results' && (
+          <div className="space-y-6">
+            <DataTable />
+            <div className="flex flex-wrap gap-3">
+              <ExportCSV />
+              <ExportPrism />
+            </div>
+          </div>
+        )}
+        {tab === 'figures' && (
+          <div className="space-y-6">
+            <BarChart />
+            <GraphCustomizer
+              target={results.summary?.[0]?.target || ''}
+              onUpdate={(settings) => setGraphSettings(settings.target, settings)}
+            />
+            <div className="flex flex-wrap gap-3">
+              <ExportGraph />
+            </div>
+          </div>
+        )}
         {tab === 'qc' && (
-          tier === 'free' ? <QCSummaryBadge /> : <QCFullReport />
+          canSeeFullQC ? <QCFullReport /> : <QCFreePreview />
         )}
       </div>
 
-      {/* Export buttons */}
+      {/* Start over */}
       <div className="mt-8 flex flex-wrap gap-3">
-        <ExportCSV />
-        <ExportGraph />
         <button
           onClick={reset}
           className="px-6 py-2 text-sm text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark border border-border dark:border-border-dark rounded-lg transition-colors"
@@ -69,6 +97,29 @@ export default function ResultsPanel() {
           {t('results.startOver')}
         </button>
       </div>
+
+      {/* Share prompt — shown once after first results */}
+      {showShareBanner && (
+        <div className="mt-6 p-4 rounded-lg border border-accent/20 bg-accent/5 flex items-center justify-between gap-4">
+          <p className="text-sm text-text-primary dark:text-text-primary-dark">
+            {t('referral.sharePrompt', 'Love your results? Share VoilaPCR with a colleague — earn 3 months of Pro when they subscribe.')}
+          </p>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={copyReferralLink}
+              className="px-3 py-1.5 text-xs bg-accent hover:bg-accent-hover text-white rounded-lg transition-colors"
+            >
+              {t('referral.copy', 'Copy link')}
+            </button>
+            <button
+              onClick={() => setShowShareBanner(false)}
+              className="px-2 py-1.5 text-xs text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark transition-colors"
+            >
+              {t('referral.dismiss', 'Dismiss')}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

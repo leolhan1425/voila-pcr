@@ -1,10 +1,12 @@
 import { useTranslation } from 'react-i18next'
 import useStore from '../../store/useStore'
 import AccountMenu from '../auth/AccountMenu'
+import { isDemoMode } from '../../utils/demoMode'
 
 export default function Header({ navigate }) {
   const { t } = useTranslation()
   const { darkMode, toggleDarkMode, setShowPricing } = useStore()
+  const demo = isDemoMode()
 
   const handleNav = (e, path) => {
     e.preventDefault()
@@ -25,6 +27,11 @@ export default function Header({ navigate }) {
           <span className="font-mono text-xl font-semibold text-accent">
             {t('brandMono')}
           </span>
+          {demo && (
+            <span className="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300 font-mono uppercase tracking-wide">
+              Demo
+            </span>
+          )}
         </a>
 
         <nav className="hidden sm:flex items-center gap-5 text-sm text-text-secondary dark:text-text-secondary-dark">
@@ -36,6 +43,9 @@ export default function Header({ navigate }) {
           </a>
           <a href="/formats" onClick={(e) => handleNav(e, '/formats')} className="hover:text-accent transition-colors">
             Formats
+          </a>
+          <a href="/blog" onClick={(e) => handleNav(e, '/blog')} className="hover:text-accent transition-colors">
+            Blog
           </a>
         </nav>
 

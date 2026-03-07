@@ -1,15 +1,11 @@
 import { useState, useCallback } from 'react'
-import { getMonthlyUsage, incrementUsage, canAnalyze, FREE_TIER_LIMIT } from '../api/usage'
-import useTier from './useTier'
+import { getMonthlyUsage, incrementUsage } from '../api/usage'
 
 /**
- * Hook that tracks analysis count for free-tier gating.
- *
- * TODO: Sync with server-side usage table when Supabase is configured.
- * Currently uses localStorage with monthly keys (voilapcr_usage_YYYY-MM).
+ * Hook that tracks analysis count for analytics.
+ * Free tier has unlimited analyses (v3).
  */
 export default function useUsage() {
-  const { tier } = useTier()
   const [analysisCount, setAnalysisCount] = useState(() => getMonthlyUsage())
 
   const handleIncrementAnalysis = useCallback(() => {
@@ -18,12 +14,9 @@ export default function useUsage() {
     return newCount
   }, [])
 
-  const userCanAnalyze = tier !== 'free' || analysisCount < FREE_TIER_LIMIT
-
   return {
     analysisCount,
     incrementAnalysis: handleIncrementAnalysis,
-    canAnalyze: userCanAnalyze,
-    remainingAnalyses: tier !== 'free' ? Infinity : Math.max(0, FREE_TIER_LIMIT - analysisCount),
+    canAnalyze: true,
   }
 }

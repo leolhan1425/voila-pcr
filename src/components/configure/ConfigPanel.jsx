@@ -11,7 +11,8 @@ import QCReport from './QCReport'
 import WellExclusion from './WellExclusion'
 import MethodSelector from './MethodSelector'
 import AdvancedOptions from './AdvancedOptions'
-import { getMonthlyUsage, incrementUsage } from '../../api/usage'
+import SavedTemplates from './SavedTemplates'
+import { incrementUsage } from '../../api/usage'
 
 export default function ConfigPanel() {
   const { t } = useTranslation()
@@ -46,11 +47,6 @@ export default function ConfigPanel() {
   const hasStandards = Object.values(sampleRoles).some((r) => r === 'standard')
 
   const handleAnalyze = () => {
-    // Check free tier usage
-    if (tier === 'free' && getMonthlyUsage() >= 3) {
-      setShowUpgradePrompt('unlimited')
-      return
-    }
 
     const filteredData = {
       ...parsedData,
@@ -78,7 +74,7 @@ export default function ConfigPanel() {
     setResults(results)
     setStep('results')
 
-    if (tier === 'free') incrementUsage()
+    incrementUsage()
   }
 
   const canAnalyze = config.method === 'genorm'
@@ -189,6 +185,8 @@ export default function ConfigPanel() {
       </div>
 
       <AdvancedOptions targets={parsedData.targets} />
+
+      <SavedTemplates />
 
       <div className="mt-10 flex items-center gap-4">
         <button

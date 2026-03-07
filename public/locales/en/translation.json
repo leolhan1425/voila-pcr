@@ -170,12 +170,14 @@
       "period": "forever",
       "cta": "Get Started",
       "features": [
-        "3 analyses per month",
+        "Unlimited analyses",
         "ΔΔCt method",
-        "Basic bar chart",
+        "Basic bar chart + PNG export",
         "CSV export",
-        "QC summary badge",
-        "All machine formats"
+        "QC summary + first diagnostic",
+        "All machine formats",
+        "No account required",
+        "1 saved template"
       ]
     },
     "pro": {
@@ -186,13 +188,15 @@
       "periodAnnual": "/year",
       "cta": "Upgrade to Pro",
       "features": [
-        "Unlimited analyses",
+        "Everything in Free",
         "Full QC diagnostic report",
         "Dr. qPCR AI troubleshooting",
         "Pfaffl, geNorm, Standard Curve",
-        "Publication-quality graph customization",
+        "Publication-quality graph editor",
         "SVG, PNG (300 DPI), PDF export",
-        "Journal presets (Nature, Cell, PLOS ONE)",
+        "Prism .pzfx export",
+        "Journal presets (Nature, Cell, PLOS ONE, Science)",
+        "Unlimited saved templates",
         "Batch upload"
       ]
     },
@@ -233,12 +237,14 @@
     "description": "Share your referral code and both of you get rewarded.",
     "yourCode": "Your referral code",
     "copied": "Copied!",
-    "referrerReward": "You get: 1 month free per conversion",
+    "referrerReward": "You get: 3 months of Pro per conversion",
     "refereeReward": "They get: first month free on Pro",
-    "copy": "Copy",
+    "copy": "Copy link",
     "shareLink": "Share link",
     "sent": "Referrals sent",
-    "conversions": "Conversions"
+    "conversions": "Conversions",
+    "sharePrompt": "Love your results? Share VoilaPCR with a colleague — earn 3 months of Pro when they subscribe.",
+    "dismiss": "Dismiss"
   },
   "requestModal": {
     "title": "Request machine support",
@@ -257,11 +263,90 @@
   "footer": {
     "tagline": "Built for scientists who'd rather be in the lab.",
     "privacy": "100% client-side — your data never leaves your browser.",
+    "brand": "A VoilaScience product",
+    "contact": "hello@voilapcr.com",
     "howItWorks": "How It Works",
     "pricing": "Pricing",
     "formats": "Supported Formats",
     "blog": "Blog",
-    "changelog": "Changelog"
+    "changelog": "Changelog",
+    "privacy_page": "Privacy Policy",
+    "about": "About"
+  },
+  "landing": {
+    "heroTitle": "Raw data in.\nClean results out.",
+    "heroSubtitle": "Upload your qPCR spreadsheet from any machine. Get publication-ready results in seconds. All in your browser — your data never leaves.",
+    "tryCta": "Try it free",
+    "howCta": "See how it works",
+    "trustBadge": "Your data never leaves your browser. No server processing. No tracking.",
+    "howTitle": "How It Works",
+    "step1": "Upload",
+    "step1Desc": "Drop your spreadsheet from any qPCR machine",
+    "step2": "Configure",
+    "step2Desc": "Pick your reference gene and control group",
+    "step3": "Voila",
+    "step3Desc": "Download clean CSV and publication-ready figures",
+    "dropTitle": "Try it now — no account needed",
+    "featuresTitle": "Built for scientists",
+    "qcTitle": "Automated QC Report",
+    "qcBody": "VoilaPCR automatically scans your data for NTC contamination, replicate scatter, reference gene instability, and more. Every analysis includes a quality check.",
+    "drTitle": "Dr. qPCR — AI Troubleshooting",
+    "drBody": "Upload a screenshot of your weird curve or describe your problem. Dr. qPCR diagnoses it in seconds, with specific fixes — not vague advice.",
+    "graphTitle": "Publication-Ready Figures",
+    "graphBody": "Customize colors, fonts, error bars, significance brackets, and export at 300 DPI. Presets for Nature, Cell, PLOS ONE, and Science.",
+    "instrumentsTitle": "Works with every major instrument",
+    "instrumentsCta": "Don't see your machine? Upload a sample file and we'll add support for it.",
+    "trustTitle": "Privacy-first by design",
+    "trustBody": "All qPCR computation runs in your browser. Your spreadsheet data is never uploaded to any server. We don't use Google Analytics or any third-party trackers.",
+    "miqe": "MIQE-compliant analysis",
+    "citationTitle": "If you use VoilaPCR in your research, please cite:",
+    "citationAPA": "VoilaPCR (2026). VoilaPCR: Web-based qPCR data analysis platform. https://voilapcr.com",
+    "citationJournal": "Data were analyzed using VoilaPCR (https://voilapcr.com).",
+    "copyCitation": "Copy citation",
+    "copied": "Copied!",
+    "emailTitle": "Get notified when we add new features",
+    "emailPlaceholder": "you@university.edu",
+    "emailSubmit": "Subscribe",
+    "emailThanks": "Thanks! We'll keep you posted."
+  },
+  "templates": {
+    "title": "Saved Templates",
+    "apply": "Apply",
+    "delete": "Delete",
+    "saveAs": "Save as template",
+    "namePlaceholder": "e.g., TP53 weekly assay",
+    "save": "Save",
+    "proLimit": "Free tier: 1 template. Upgrade to Pro for unlimited.",
+    "empty": "No saved templates yet.",
+    "applied": "Template applied!",
+    "saved": "Template saved!"
+  },
+  "feedback": {
+    "formatButton": "Format not supported?",
+    "ideaButton": "Have an idea?",
+    "formatTitle": "Request instrument support",
+    "ideaTitle": "Share your idea",
+    "machineName": "Machine / instrument name",
+    "email": "Email address",
+    "emailOptional": "Email (optional)",
+    "notes": "Notes (optional)",
+    "file": "Upload sample file",
+    "category": "Category",
+    "categoryFeature": "New feature",
+    "categoryBug": "Bug report",
+    "categoryUx": "UX improvement",
+    "categoryOther": "Other",
+    "message": "Your idea or feedback",
+    "submit": "Submit",
+    "formatThanks": "Thanks! We'll email you when {{machine}} is supported.",
+    "ideaThanks": "Thanks — we read every suggestion."
+  },
+  "admin": {
+    "title": "Admin Dashboard",
+    "formatRequests": "Format Requests",
+    "feedbackTab": "Feedback",
+    "usage": "Usage Stats",
+    "noData": "No data yet."
   },
   "pages": {
     "howItWorks": {
@@ -277,6 +362,15 @@
       "title": "Supported Instruments",
       "subtitle": "VoilaPCR works with exports from all major qPCR instruments.",
       "requestCta": "Don't see yours? Request it."
+    },
+    "privacy": {
+      "title": "Privacy Policy"
+    },
+    "about": {
+      "title": "About VoilaPCR"
+    },
+    "blog": {
+      "title": "Blog"
     }
   }
 }
