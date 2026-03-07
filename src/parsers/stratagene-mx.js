@@ -50,14 +50,15 @@ function detectXlsx(fileData) {
     if (rowStr.includes('agilent') && rowStr.includes('mx')) return true
   }
 
-  // Check for MxPro-style columns: "Ct (dRn)" or "Dye/Target"
+  // Check for MxPro-style columns: "Ct (dRn)", "Ct (dR)", "Dye/Target", "Assay"
   const headerRow = findHeaderRow(raw)
   if (headerRow) {
     const headers = headerRow.headers.map((h) => String(h).toLowerCase().trim())
-    const hasCtDrn = headers.some((h) => h.includes('ct') && h.includes('drn'))
+    const hasCtDr = headers.some((h) => (h.includes('ct') && (h.includes('dr') || h.includes('drn'))))
     const hasDyeTarget = headers.some((h) => h.includes('dye') || h.includes('dye/target'))
     const hasWellType = headers.some((h) => h === 'well type')
-    if (hasCtDrn || (hasDyeTarget && hasWellType)) return true
+    const hasAssay = headers.some((h) => h === 'assay')
+    if (hasCtDr || (hasDyeTarget && hasWellType) || (hasAssay && hasWellType)) return true
   }
 
   return false
@@ -76,10 +77,11 @@ function detectCsv(fileData) {
 
   if (rows.length > 0) {
     const headers = Object.keys(rows[0]).map((h) => h.toLowerCase().trim())
-    const hasCtDrn = headers.some((h) => h.includes('ct') && h.includes('drn'))
+    const hasCtDr = headers.some((h) => (h.includes('ct') && (h.includes('dr') || h.includes('drn'))))
     const hasDyeTarget = headers.some((h) => h.includes('dye') || h.includes('dye/target'))
     const hasWellType = headers.some((h) => h === 'well type')
-    if (hasCtDrn || (hasDyeTarget && hasWellType)) return true
+    const hasAssay = headers.some((h) => h === 'assay')
+    if (hasCtDr || (hasDyeTarget && hasWellType) || (hasAssay && hasWellType)) return true
   }
 
   return false
@@ -128,8 +130,10 @@ function buildParsedData(headers, dataRows, fileName) {
     // "Dye/Target" combined column or separate columns
     dyeTarget: lower.findIndex((h) => h.includes('dye/target') || h.includes('dye / target')),
     dye: findCol(lower, 'dye'),
-    target: findCol(lower, 'target', 'target name'),
-    sample: findCol(lower, 'sample', 'sample name'),
+    // "Assay" is MxPro's name for target gene
+    target: findCol(lower, 'assay', 'target', 'target name'),
+    // "Well Name" is MxPro's name for sample name
+    sample: findCol(lower, 'well name', 'sample', 'sample name'),
     wellType: findCol(lower, 'well type'),
     // Ct can be "Ct (dRn)", "Ct(dRn)", "Ct (dR)", or just "Ct"
     ct: lower.findIndex((h) => h.startsWith('ct')),
@@ -174,7 +178,8 @@ function buildParsedData(headers, dataRows, fileName) {
     const ct =
       ctRaw === 'No Ct' || ctRaw === 'N/A' || ctRaw === '' || ctRaw == null
         ? null
-        : parseFloat(ctRaw)
+        // Handle European comma decimal separator (e.g., "27,52" → 27.52)
+        : parseFloat(String(ctRaw).replace(',', '.'))
 
     // Map Well Type to taskType
     const wellTypeRaw = idx.wellType >= 0 ? String(row[idx.wellType] || '').trim().toLowerCase() : ''
