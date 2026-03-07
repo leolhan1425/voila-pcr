@@ -71,7 +71,8 @@ function detectCsv(fileData) {
     const hasWell = headers.some((h) => h === 'well')
     const hasSample = headers.some((h) => h === 'sample name')
     const hasTarget = headers.some((h) => h === 'target name')
-    const hasCt = headers.some((h) => h === 'ct' || h === 'cт')
+    // StepOne CSV exports label Ct as "C_" (subscript T lost in export)
+    const hasCt = headers.some((h) => h === 'ct' || h === 'cт' || h === 'c_' || /^c.$/i.test(h))
     const hasReporter = headers.some((h) => h === 'reporter')
     // Reporter column is a strong StepOne signal
     if (hasWell && hasSample && hasTarget && hasCt && hasReporter) return true
@@ -94,7 +95,7 @@ function parseXlsx(fileData, fileName) {
     const strs = row.map((c) => String(c).toLowerCase().trim())
     const hasSample = strs.some((s) => s === 'sample name')
     const hasTarget = strs.some((s) => s === 'target name')
-    const hasCt = strs.some((s) => s === 'ct' || s === 'cт')
+    const hasCt = strs.some((s) => s === 'ct' || s === 'cт' || s === 'c_' || /^c.$/i.test(s))
     if (hasSample && hasTarget && hasCt) {
       headerIdx = i
       break
@@ -136,7 +137,8 @@ function buildParsedData(headers, dataRows, fileName, instrument) {
     well: findCol(lower, 'well', 'well position'),
     sample: findCol(lower, 'sample name'),
     target: findCol(lower, 'target name'),
-    ct: findCol(lower, 'ct', 'cт', 'cq'),
+    // StepOne CSV exports Ct as "C_" (subscript T lost); also match via regex
+    ct: findColOrRegex(lower, /^c[t_т]$|^cq$/i),
     task: findCol(lower, 'task'),
     quantity: findCol(lower, 'quantity'),
   }
@@ -195,6 +197,10 @@ function findCol(lowerHeaders, ...names) {
     if (i >= 0) return i
   }
   return -1
+}
+
+function findColOrRegex(lowerHeaders, regex) {
+  return lowerHeaders.findIndex((h) => regex.test(h))
 }
 
 function emptyResult(fileName) {

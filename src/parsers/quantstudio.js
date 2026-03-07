@@ -37,7 +37,7 @@ const quantstudio = {
       const strs = row.map((c) => String(c).toLowerCase().trim())
       const hasSample = strs.some((s) => s === 'sample name')
       const hasTarget = strs.some((s) => s === 'target name')
-      const hasCt = strs.some((s) => s === 'ct' || s === 'cт' || s === 'cq')
+      const hasCt = strs.some((s) => s === 'ct' || s === 'cт' || s === 'cq' || s === 'c_')
       const hasWell = strs.some((s) => s === 'well' || s === 'well position')
       if (hasSample && hasTarget && hasCt && hasWell) return true
     }
@@ -61,7 +61,7 @@ const quantstudio = {
       const strs = row.map((c) => String(c).toLowerCase().trim())
       const hasSample = strs.some((s) => s === 'sample name')
       const hasTarget = strs.some((s) => s === 'target name')
-      const hasCt = strs.some((s) => s === 'ct' || s === 'cт' || s === 'cq')
+      const hasCt = strs.some((s) => s === 'ct' || s === 'cт' || s === 'cq' || s === 'c_')
       if (hasSample && hasTarget && hasCt) {
         headerIdx = i
         break
@@ -81,7 +81,7 @@ const quantstudio = {
       if (name === 'well position') colIdx.wellPosition = c
       if (name === 'sample name') colIdx.sample = c
       if (name === 'target name') colIdx.target = c
-      if (name === 'ct' || name === 'cт' || name === 'cq') colIdx.ct = c
+      if (name === 'ct' || name === 'cт' || name === 'cq' || name === 'c_') colIdx.ct = c
       if (name === 'task') colIdx.task = c
       if (name === 'quantity') colIdx.quantity = c
     }

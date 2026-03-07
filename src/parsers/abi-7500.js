@@ -39,7 +39,7 @@ const abi7500 = {
       const strs = row.map((c) => String(c).toLowerCase().trim())
       const hasDetector = strs.some((s) => s === 'detector' || s === 'detector name')
       const hasSample = strs.some((s) => s === 'sample name')
-      const hasCt = strs.some((s) => s === 'ct' || s === 'ct' || s === 'cт')
+      const hasCt = strs.some((s) => s === 'ct' || s === 'cт' || s === 'c_')
       const hasWell = strs.some((s) => s === 'well')
       if (hasDetector && hasSample && hasCt && hasWell) return true
     }
@@ -63,7 +63,7 @@ const abi7500 = {
       const strs = row.map((c) => String(c).toLowerCase().trim())
       const hasDetector = strs.some((s) => s === 'detector' || s === 'detector name')
       const hasSample = strs.some((s) => s === 'sample name')
-      const hasCt = strs.some((s) => s === 'ct' || s === 'ct' || s === 'cт')
+      const hasCt = strs.some((s) => s === 'ct' || s === 'cт' || s === 'c_')
       if ((hasDetector || strs.some((s) => s === 'target name')) && hasSample && hasCt) {
         headerIdx = i
         break
@@ -82,7 +82,7 @@ const abi7500 = {
       if (name === 'well' && colIdx.well == null) colIdx.well = c
       if (name === 'sample name') colIdx.sample = c
       if (name === 'detector' || name === 'detector name' || name === 'target name') colIdx.target = c
-      if ((name === 'ct' || name === 'cт') && colIdx.ct == null) colIdx.ct = c
+      if ((name === 'ct' || name === 'cт' || name === 'c_') && colIdx.ct == null) colIdx.ct = c
       if (name === 'task') colIdx.task = c
       if (name === 'quantity') colIdx.quantity = c
     }
