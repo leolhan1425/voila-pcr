@@ -4,9 +4,12 @@ import RequestFormat from '../upload/RequestFormat'
 
 const FORMATS = [
   { name: 'QuantStudio', maker: 'Thermo Fisher / Applied Biosystems', models: 'QuantStudio 3, 5, 6, 7', formats: '.xls, .xlsx' },
+  { name: 'ABI StepOne', maker: 'Applied Biosystems', models: 'StepOne, StepOnePlus', formats: '.xls, .xlsx, .csv' },
+  { name: 'ABI 7500', maker: 'Applied Biosystems', models: '7500, 7500 Fast', formats: '.xls, .xlsx' },
   { name: 'Bio-Rad CFX', maker: 'Bio-Rad', models: 'CFX96, CFX384, CFX Opus', formats: '.csv, .xlsx' },
   { name: 'Roche LightCycler', maker: 'Roche', models: 'LightCycler 96, 480', formats: '.xlsx, .csv, .txt' },
-  { name: 'ABI 7500', maker: 'Applied Biosystems', models: '7500, 7500 Fast', formats: '.xls, .xlsx' },
+  { name: 'QIAGEN Rotor-Gene Q', maker: 'QIAGEN / Corbett', models: 'Rotor-Gene Q, 6000', formats: '.xlsx, .csv' },
+  { name: 'Agilent Stratagene Mx', maker: 'Agilent / Stratagene', models: 'Mx3000P, Mx3005P', formats: '.xls, .xlsx, .csv, .txt' },
   { name: 'Fluidigm BioMark', maker: 'Standard BioTools (Fluidigm)', models: 'BioMark HD, EP1', formats: '.csv, .xlsx' },
   { name: 'Generic CSV', maker: 'Any instrument', models: 'Any machine with CSV export', formats: '.csv' },
 ]
