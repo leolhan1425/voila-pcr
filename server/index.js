@@ -1,12 +1,29 @@
 import Stripe from 'stripe'
 import express from 'express'
 import cors from 'cors'
+import { readFileSync } from 'fs'
+import { join, dirname } from 'path'
+import { fileURLToPath } from 'url'
+
+const __dirname = dirname(fileURLToPath(import.meta.url))
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
 
 const PLUS_PRICE_ID = process.env.STRIPE_PRICE_ANNUAL // $99/year — only plan
+const WINBACK_COUPON = 'WINBACK50' // 50% off coupon for lapsed users
 const BASE_URL = process.env.BASE_URL || 'https://qpcr.hanlabnw.com'
 const PORT = process.env.PORT || 8055
+
+// --- Whitelist ---
+function loadWhitelist() {
+  try {
+    const data = readFileSync(join(__dirname, 'whitelist.json'), 'utf8')
+    const list = JSON.parse(data)
+    return Array.isArray(list) ? list.map((e) => e.toLowerCase().trim()) : []
+  } catch {
+    return []
+  }
+}
 
 const app = express()
 
@@ -53,9 +70,20 @@ app.post('/api/stripe-webhook', express.raw({ type: 'application/json' }), async
 app.use(express.json())
 app.use(cors({ origin: [BASE_URL, 'http://localhost:5173', 'https://voilapcr.com', 'https://www.voilapcr.com'] }))
 
-// Create Checkout Session — annual Plus only
-app.post('/api/create-checkout-session', async (req, res) => {
+// Check whitelist — returns { whitelisted: true, tier: 'plus' } for whitelisted emails
+app.post('/api/check-whitelist', (req, res) => {
   const { email } = req.body
+  if (!email) return res.json({ whitelisted: false })
+
+  const whitelist = loadWhitelist()
+  const whitelisted = whitelist.includes(email.toLowerCase().trim())
+  res.json({ whitelisted, tier: whitelisted ? 'plus' : 'free' })
+})
+
+// Create Checkout Session — annual Plus only
+// Pass winback=true for 50% off lapsed-user offer
+app.post('/api/create-checkout-session', async (req, res) => {
+  const { email, winback } = req.body
 
   if (!PLUS_PRICE_ID) {
     return res.status(500).json({ error: 'Stripe price not configured' })
@@ -71,6 +99,11 @@ app.post('/api/create-checkout-session', async (req, res) => {
 
     if (email) {
       sessionParams.customer_email = email
+    }
+
+    // Apply 50% win-back coupon for lapsed users
+    if (winback) {
+      sessionParams.discounts = [{ coupon: WINBACK_COUPON }]
     }
 
     const session = await stripe.checkout.sessions.create(sessionParams)

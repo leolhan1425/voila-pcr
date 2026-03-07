@@ -12,6 +12,7 @@ import GraphCustomizer from './GraphCustomizer'
 import QCFreePreview from '../qc/QCFreePreview'
 import QCFullReport from '../qc/QCFullReport'
 import QCRunner from '../qc/QCRunner'
+import PlateMap from '../plate-map/PlateMap'
 
 const TABS = ['results', 'figures', 'qc']
 
@@ -120,7 +121,10 @@ export default function ResultsPanel() {
           </div>
         )}
         {tab === 'qc' && (
-          canSeeFullQC ? <QCFullReport /> : <QCFreePreview />
+          <>
+            <PlateMap showQcView={true} />
+            {canSeeFullQC ? <QCFullReport /> : <QCFreePreview />}
+          </>
         )}
       </div>
 

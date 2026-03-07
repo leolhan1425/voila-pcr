@@ -7,6 +7,7 @@ import { analyzePfaffl } from '../../analysis/pfaffl'
 import { analyzeStandardCurve } from '../../analysis/standardCurve'
 import { analyzeGeNorm } from '../../analysis/genorm'
 import SampleClassifier from './SampleClassifier'
+import PlateMap from '../plate-map/PlateMap'
 import QCReport from './QCReport'
 import WellExclusion from './WellExclusion'
 import MethodSelector from './MethodSelector'
@@ -100,6 +101,7 @@ export default function ConfigPanel() {
       </h2>
 
       <SampleClassifier />
+      <PlateMap />
 
       {hasStandards && (
         <div className="mt-6">

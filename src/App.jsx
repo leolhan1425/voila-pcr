@@ -11,6 +11,7 @@ import FeedbackButtons from './components/feedback/FeedbackButtons'
 import LoginModal from './components/auth/LoginModal'
 import PricingModal from './components/billing/PricingModal'
 import UpgradePrompt from './components/billing/UpgradePrompt'
+import WinBackModal from './components/billing/WinBackModal'
 import HowItWorks from './components/pages/HowItWorks'
 import PricingPage from './components/pages/PricingPage'
 import FormatsPage from './components/pages/FormatsPage'
@@ -70,8 +71,46 @@ class ErrorBoundary extends Component {
 }
 
 export default function App() {
-  const { step, darkMode, showLogin, setShowLogin, showPricing, setShowPricing, showUpgradePrompt, setShowUpgradePrompt, setTier } = useStore()
+  const { step, darkMode, showLogin, setShowLogin, showPricing, setShowPricing, showUpgradePrompt, setShowUpgradePrompt, setTier, user } = useStore()
   const [page, setPage] = useState(getPage)
+  const [showWinBack, setShowWinBack] = useState(false)
+
+  // Detect lapsed Plus user — show win-back offer once
+  useEffect(() => {
+    const wasPrevPlus = localStorage.getItem('voilapcr_was_plus') === 'true'
+    const currentTier = localStorage.getItem('voilapcr_tier') || 'free'
+    const dismissed = localStorage.getItem('voilapcr_winback_dismissed')
+    if (wasPrevPlus && currentTier === 'free' && !dismissed) {
+      setShowWinBack(true)
+    }
+  }, [])
+
+  // Track when user becomes Plus (so we can detect lapse later)
+  useEffect(() => {
+    const tier = localStorage.getItem('voilapcr_tier')
+    if (tier === 'plus') {
+      localStorage.setItem('voilapcr_was_plus', 'true')
+    }
+  }, [])
+
+  // Check whitelist when user signs in
+  useEffect(() => {
+    if (user?.email) {
+      fetch('/api/check-whitelist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email }),
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.whitelisted) {
+            setTier('plus')
+            localStorage.setItem('voilapcr_tier', 'plus')
+          }
+        })
+        .catch(() => {})
+    }
+  }, [user?.email, setTier])
 
   // Handle Stripe checkout redirect
   useEffect(() => {
@@ -154,6 +193,14 @@ export default function App() {
             onUpgrade={() => {
               setShowUpgradePrompt(null)
               setShowPricing(true)
+            }}
+          />
+        )}
+        {showWinBack && (
+          <WinBackModal
+            onClose={() => {
+              setShowWinBack(false)
+              localStorage.setItem('voilapcr_winback_dismissed', 'true')
             }}
           />
         )}
