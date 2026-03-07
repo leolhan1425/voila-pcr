@@ -243,6 +243,9 @@ export default function DrQPCRPanel() {
                 </svg>
               </button>
             </form>
+            <p className="mt-2 text-[10px] text-text-secondary dark:text-text-secondary-dark text-center leading-tight">
+              Powered by AI. Your queries are processed via API and are never used to train AI models. Data is automatically deleted within 7 days.
+            </p>
           </div>
         </>
       )}

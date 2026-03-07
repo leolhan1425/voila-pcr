@@ -12,7 +12,8 @@ import WellExclusion from './WellExclusion'
 import MethodSelector from './MethodSelector'
 import AdvancedOptions from './AdvancedOptions'
 import SavedTemplates from './SavedTemplates'
-import { incrementUsage } from '../../api/usage'
+import { incrementUsage, incrementTrialSession, canAnalyze as checkCanAnalyze } from '../../api/usage'
+import useTier from '../../hooks/useTier'
 
 export default function ConfigPanel() {
   const { t } = useTranslation()
@@ -20,9 +21,10 @@ export default function ConfigPanel() {
     parsedData, config, setConfig,
     sampleRoles, setSampleRoles,
     qcReport, setQcReport,
-    setResults, setStep, tier,
-    setShowUpgradePrompt,
+    setResults, setStep,
+    setShowPricing,
   } = useStore()
+  const { tier, isPlus, inTrialSession, trialRemaining } = useTier()
 
   useEffect(() => {
     if (parsedData && Object.keys(sampleRoles).length === 0) {
@@ -70,11 +72,21 @@ export default function ConfigPanel() {
         results = analyzeDdct(filteredData, config)
     }
 
+    // Check usage limits
+    if (!checkCanAnalyze(tier)) {
+      setShowPricing(true)
+      return
+    }
+
     results.qcReport = qcReport
     setResults(results)
     setStep('results')
 
     incrementUsage()
+    // Track trial sessions for free users
+    if (!isPlus && inTrialSession) {
+      incrementTrialSession()
+    }
   }
 
   const canAnalyze = config.method === 'genorm'

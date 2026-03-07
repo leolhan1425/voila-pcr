@@ -1,41 +1,50 @@
-import { create } from 'zustand'
-import { isProFeature, hasAccess } from '../utils/featureGate'
+import useStore from '../store/useStore'
+import { isPlusFeature, hasAccess } from '../utils/featureGate'
 import { isDemoMode } from '../utils/demoMode'
+import { getTrialSessionsUsed, getTrialSessionsMax } from '../api/usage'
 
 /**
- * Tier store — tracks the current user's subscription tier.
- * In demo mode, everything is unlocked.
+ * Tier hook — tracks the current user's subscription tier.
+ * Two tiers: 'free' and 'plus'. In demo mode, everything is unlocked.
+ *
+ * Trial sessions: first 3 analyses get Plus experience even on free tier.
  */
-const useTierStore = create((set) => ({
-  tier: 'free', // 'free' | 'pro' | 'lab'
-  setTier: (tier) => set({ tier }),
-}))
-
 export default function useTier() {
-  const tier = useTierStore((s) => s.tier)
-  const setTier = useTierStore((s) => s.setTier)
+  const tier = useStore((s) => s.tier)
+  const setTier = useStore((s) => s.setTier)
 
   const demo = isDemoMode()
-  const effectiveTier = demo ? 'pro' : tier
+  const isPlus = demo || tier === 'plus'
+
+  const trialUsed = getTrialSessionsUsed()
+  const trialMax = getTrialSessionsMax()
+  const trialRemaining = Math.max(0, trialMax - trialUsed)
+  const inTrialSession = !isPlus && trialRemaining > 0
+
+  // During trial sessions, user gets Plus features
+  const effectivelyPlus = isPlus || inTrialSession
 
   const canUseMethod = (method) => {
     if (method === 'ddct') return true
-    if (demo || tier === 'pro' || tier === 'lab') return true
-    return false
+    return effectivelyPlus
   }
 
-  const isPaidTier = demo || tier === 'pro' || tier === 'lab'
-
   return {
-    tier: effectiveTier,
-    rawTier: tier,
+    tier: isPlus ? 'plus' : 'free',
+    isPlus,
+    effectivelyPlus,
     setTier,
     canUseMethod,
-    canUseGraphCustomizer: isPaidTier,
-    canUseDrQPCR: isPaidTier,
-    canSeeFullQC: isPaidTier,
-    isProFeature: (feature) => isProFeature(feature),
-    hasAccess: (feature) => hasAccess(feature, effectiveTier),
+    canUseGraphCustomizer: effectivelyPlus,
+    canUseDrQPCR: effectivelyPlus,
+    canSeeFullQC: effectivelyPlus,
+    isPlusFeature: (feature) => isPlusFeature(feature),
+    hasAccess: (feature) => hasAccess(feature, isPlus ? 'plus' : 'free') || inTrialSession,
     isDemoMode: demo,
+    // Trial info
+    inTrialSession,
+    trialRemaining,
+    trialUsed,
+    trialMax,
   }
 }

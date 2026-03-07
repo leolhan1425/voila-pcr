@@ -151,7 +151,7 @@ function ProBadge() {
 export default function LandingPage({ navigate }) {
   const { t } = useTranslation()
   const { parsedData, setStep } = useStore()
-  const [annual, setAnnual] = useState(true)
+
   const [copied, setCopied] = useState(false)
   const [showRequest, setShowRequest] = useState(false)
 
@@ -171,56 +171,40 @@ export default function LandingPage({ navigate }) {
     setStep('configure')
   }, [setStep])
 
-  /* Pricing data */
+  /* Pricing data — two tiers only */
   const tiers = [
     {
       key: 'free',
-      name: t('landing.pricing.free.name', 'Free'),
+      name: 'Free',
       price: '$0',
-      period: t('landing.pricing.free.period', 'forever'),
+      period: 'forever',
       features: [
-        t('landing.pricing.free.f1', '3 analyses per day'),
-        t('landing.pricing.free.f2', 'DDCt method'),
-        t('landing.pricing.free.f3', 'QC diagnostics (8 checks)'),
-        t('landing.pricing.free.f4', 'CSV & graph export'),
-        t('landing.pricing.free.f5', 'All 11 instrument parsers'),
+        '5 analyses/month',
+        '3 Plus trial sessions',
+        'Basic graphs & QC summary',
+        'All machine formats supported',
       ],
-      cta: t('landing.pricing.free.cta', 'Get started'),
+      cta: 'Get started free',
       highlighted: false,
     },
     {
-      key: 'pro',
-      name: t('landing.pricing.pro.name', 'Pro'),
-      price: annual ? '$9' : '$12',
-      period: annual
-        ? t('landing.pricing.pro.periodAnnual', '/mo, billed annually')
-        : t('landing.pricing.pro.periodMonthly', '/mo'),
+      key: 'plus',
+      name: 'Plus',
+      price: '$99',
+      period: '/year',
       features: [
-        t('landing.pricing.pro.f1', 'Unlimited analyses'),
-        t('landing.pricing.pro.f2', 'Pfaffl, geNorm, Standard Curve'),
-        t('landing.pricing.pro.f3', 'Dr. qPCR AI assistant'),
-        t('landing.pricing.pro.f4', 'Journal-ready figure presets'),
-        t('landing.pricing.pro.f5', 'Priority format requests'),
-        t('landing.pricing.pro.f6', 'Everything in Free'),
+        'Unlimited analyses',
+        'Full QC diagnostic report',
+        'Dr. qPCR AI troubleshooting',
+        'Publication-ready graph editor',
+        'Journal presets (Nature, Cell, PLOS ONE)',
+        '300 DPI, SVG, PDF export',
+        'Advanced methods (Pfaffl, geNorm)',
+        'Saved analysis templates',
+        'Priority format support',
       ],
-      cta: t('landing.pricing.pro.cta', 'Start free trial'),
+      cta: 'Start with 3 free Plus sessions',
       highlighted: true,
-    },
-    {
-      key: 'lab',
-      name: t('landing.pricing.lab.name', 'Lab'),
-      price: t('landing.pricing.lab.price', 'Custom'),
-      period: t('landing.pricing.lab.period', 'per seat/year'),
-      features: [
-        t('landing.pricing.lab.f1', 'Shared lab workspace'),
-        t('landing.pricing.lab.f2', 'SSO & admin dashboard'),
-        t('landing.pricing.lab.f3', 'Audit log & compliance'),
-        t('landing.pricing.lab.f4', 'Bulk user management'),
-        t('landing.pricing.lab.f5', 'Dedicated support'),
-        t('landing.pricing.lab.f6', 'Everything in Pro'),
-      ],
-      cta: t('landing.pricing.lab.cta', 'Contact us'),
-      highlighted: false,
     },
   ]
 
@@ -519,52 +503,25 @@ export default function LandingPage({ navigate }) {
       {/*  SECTION 6 — Pricing                                         */}
       {/* ============================================================ */}
       <section id="pricing" className="bg-surface dark:bg-surface-dark border-y border-border dark:border-border-dark">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
-          <SectionHeading sub={t('landing.pricing.sub', 'Start free. Upgrade when you need more power.')}>
-            {t('landing.pricing.title', 'Simple, transparent pricing')}
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-16 sm:py-20">
+          <SectionHeading sub="Start free. Upgrade when you need the full toolkit.">
+            Simple pricing
           </SectionHeading>
 
-          {/* Toggle */}
-          <div className="mt-8 flex justify-center">
-            <div className="inline-flex items-center gap-1 bg-warm-bg dark:bg-warm-bg-dark border border-border dark:border-border-dark rounded-lg p-1">
-              <button
-                onClick={() => setAnnual(false)}
-                className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
-                  !annual
-                    ? 'bg-accent text-white'
-                    : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
-                }`}
-              >
-                {t('landing.pricing.monthly', 'Monthly')}
-              </button>
-              <button
-                onClick={() => setAnnual(true)}
-                className={`px-4 py-1.5 text-sm rounded-md transition-colors ${
-                  annual
-                    ? 'bg-accent text-white'
-                    : 'text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
-                }`}
-              >
-                {t('landing.pricing.annual', 'Annual')}{' '}
-                <span className="text-xs opacity-80">{t('landing.pricing.save', 'Save 25%')}</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Cards */}
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
+          {/* Cards — two columns */}
+          <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
             {tiers.map((plan) => (
               <div
                 key={plan.key}
                 className={`relative p-6 rounded-xl border transition-shadow ${
                   plan.highlighted
-                    ? 'border-accent shadow-lg shadow-accent/10 dark:shadow-accent/5'
+                    ? 'border-accent border-2 shadow-lg shadow-accent/10 dark:shadow-accent/5'
                     : 'border-border dark:border-border-dark'
                 } bg-warm-bg dark:bg-warm-bg-dark`}
               >
                 {plan.highlighted && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-accent text-white text-xs font-mono rounded-full">
-                    {t('landing.pricing.popular', 'Most Popular')}
+                    Recommended
                   </div>
                 )}
                 <h3 className="font-display text-xl font-bold">{plan.name}</h3>
@@ -585,7 +542,6 @@ export default function LandingPage({ navigate }) {
                 <button
                   onClick={() => {
                     if (plan.key === 'free') scrollTo('try-it')
-                    else if (plan.key === 'lab') window.open('mailto:support@voilapcr.com?subject=Lab%20plan%20inquiry')
                     else navigate('/pricing')
                   }}
                   className={`mt-8 w-full py-2.5 rounded-lg font-medium text-sm transition-colors ${
@@ -599,6 +555,10 @@ export default function LandingPage({ navigate }) {
               </div>
             ))}
           </div>
+
+          <p className="mt-8 text-center text-sm text-text-secondary dark:text-text-secondary-dark">
+            Need it for your whole lab? Team pricing coming soon — <a href="mailto:hello@voilapcr.com" className="text-accent hover:underline">join the waitlist</a>.
+          </p>
         </div>
       </section>
 

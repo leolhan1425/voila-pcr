@@ -23,7 +23,7 @@ const SECTIONS = [
     key: 'drQpcr',
     defaultTitle: 'Dr. qPCR',
     defaultBody:
-      'When you use the Dr. qPCR AI assistant, only the text of your typed question and any image you choose to attach are sent to the AI provider for processing. Your raw spreadsheet data, Ct values, and uploaded files are never sent. The AI does not have access to your qPCR data unless you explicitly type or paste it into the chat.',
+      'Dr. qPCR sends only your typed questions and uploaded images to our AI provider (Anthropic) via their commercial API. Your uploaded qPCR spreadsheet data is never transmitted to any server. Anthropic\'s commercial API terms prohibit the use of API data for model training. API logs are automatically deleted within 7 days.',
   },
   {
     key: 'contact',

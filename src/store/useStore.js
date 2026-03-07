@@ -12,7 +12,7 @@ const useStore = create((set) => ({
   // Auth / tier
   user: null,
   setUser: (user) => set({ user }),
-  tier: 'free', // 'free' | 'pro' | 'lab'
+  tier: localStorage.getItem('voilapcr_tier') || 'free', // 'free' | 'plus'
   setTier: (tier) => set({ tier }),
 
   // Parsed data from file upload

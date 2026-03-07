@@ -1,4 +1,4 @@
-import { useState, Component } from 'react'
+import { useState, useEffect, Component } from 'react'
 import useStore from './store/useStore'
 import Header from './components/layout/Header'
 import Footer from './components/layout/Footer'
@@ -70,8 +70,31 @@ class ErrorBoundary extends Component {
 }
 
 export default function App() {
-  const { step, darkMode, showLogin, setShowLogin, showPricing, setShowPricing, showUpgradePrompt, setShowUpgradePrompt } = useStore()
+  const { step, darkMode, showLogin, setShowLogin, showPricing, setShowPricing, showUpgradePrompt, setShowUpgradePrompt, setTier } = useStore()
   const [page, setPage] = useState(getPage)
+
+  // Handle Stripe checkout redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const checkout = params.get('checkout')
+    const sessionId = params.get('session_id')
+
+    if (checkout === 'success' && sessionId) {
+      fetch(`/api/checkout-status?session_id=${sessionId}`)
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.paymentStatus === 'paid') {
+            setTier('plus')
+            localStorage.setItem('voilapcr_tier', 'plus')
+          }
+        })
+        .catch(() => {})
+      // Clean URL
+      window.history.replaceState({}, '', '/')
+    } else if (checkout === 'cancel') {
+      window.history.replaceState({}, '', '/')
+    }
+  }, [setTier])
 
   const navigate = (path) => {
     window.history.pushState({}, '', path)

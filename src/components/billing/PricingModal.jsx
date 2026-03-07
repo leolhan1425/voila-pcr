@@ -1,166 +1,126 @@
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import useTier from '../../hooks/useTier'
 
-/**
- * Pricing modal showing the three tiers: Free, Pro, Lab.
- * Toggle between monthly and annual pricing.
- */
-export default function PricingModal({ isOpen, onClose }) {
-  const { t } = useTranslation()
-  const { tier: currentTier } = useTier()
-  const [billing, setBilling] = useState('annual') // 'monthly' | 'annual'
+const CHECK = (
+  <svg className="w-4 h-4 text-green-500 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+  </svg>
+)
 
-  if (!isOpen) return null
+const FREE_FEATURES = [
+  '5 analyses/month',
+  '3 Plus trial sessions',
+  'Basic graphs & QC summary',
+  'All machine formats supported',
+]
 
-  // Use the nested translation structure from locales/en/translation.json
-  const freeFeatures = t('pricing.free.features', { returnObjects: true }) || []
-  const proFeatures = t('pricing.pro.features', { returnObjects: true }) || []
-  const labFeatures = t('pricing.lab.features', { returnObjects: true }) || []
+const PLUS_FEATURES = [
+  'Unlimited analyses',
+  'Full QC diagnostic report',
+  'Dr. qPCR AI troubleshooting',
+  'Publication-ready graph editor',
+  'Journal presets (Nature, Cell, PLOS ONE)',
+  '300 DPI, SVG, PDF export',
+  'Advanced methods (Pfaffl, geNorm)',
+  'Prism .pzfx export',
+  'Saved analysis templates',
+  'Priority format support',
+]
 
-  const plans = [
-    {
-      id: 'free',
-      name: t('pricing.free.name'),
-      price: t('pricing.free.price'),
-      period: t('pricing.free.period'),
-      features: Array.isArray(freeFeatures) ? freeFeatures : [],
-      cta: currentTier === 'free' ? t('pricing.currentPlan') : t('pricing.free.cta'),
-      disabled: currentTier === 'free',
-      highlight: false,
-    },
-    {
-      id: 'pro',
-      name: t('pricing.pro.name'),
-      price: billing === 'monthly' ? t('pricing.pro.priceMonthly') : t('pricing.pro.priceAnnual'),
-      period: billing === 'monthly' ? t('pricing.pro.periodMonthly') : t('pricing.pro.periodAnnual'),
-      savings: billing === 'annual' ? t('pricing.save', { percent: 31 }) : null,
-      features: Array.isArray(proFeatures) ? proFeatures : [],
-      cta: currentTier === 'pro' ? t('pricing.currentPlan') : t('pricing.pro.cta'),
-      disabled: currentTier === 'pro' || currentTier === 'lab',
-      highlight: true,
-    },
-    {
-      id: 'lab',
-      name: t('pricing.lab.name'),
-      price: t('pricing.lab.price'),
-      period: t('pricing.lab.period'),
-      features: Array.isArray(labFeatures) ? labFeatures : [],
-      cta: currentTier === 'lab' ? t('pricing.currentPlan') : t('pricing.lab.cta'),
-      disabled: currentTier === 'lab',
-      highlight: false,
-    },
-  ]
+export default function PricingModal({ onClose }) {
+  const { isPlus } = useTier()
+  const [loading, setLoading] = useState(false)
 
-  const handleCta = (planId) => {
-    // TODO: Replace with Stripe Checkout session creation
-    if (planId === 'free') return
-    if (planId === 'lab') {
-      window.open('mailto:support@voilapcr.com?subject=Lab%20Plan%20Inquiry', '_blank')
-      return
+  const handleUpgrade = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch('/api/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      })
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        alert(data.error || 'Failed to start checkout')
+      }
+    } catch {
+      alert('Could not connect to payment server')
+    } finally {
+      setLoading(false)
     }
-    alert('Stripe integration coming soon. You will be redirected to checkout.')
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={onClose}>
       <div
-        className="bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-xl"
+        className="bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-xl relative"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="text-center px-6 pt-8 pb-4">
-          <h2 className="font-display text-2xl font-bold mb-2">{t('pricing.title')}</h2>
-          <p className="text-text-secondary dark:text-text-secondary-dark text-sm mb-6">
-            {t('pricing.subtitle')}
+          <h2 className="font-display text-2xl font-bold">Choose your plan</h2>
+          <p className="mt-2 text-sm text-text-secondary dark:text-text-secondary-dark">
+            Start free. Upgrade when you need the full toolkit.
           </p>
+        </div>
 
-          {/* Billing toggle */}
-          <div className="inline-flex items-center gap-1 bg-warm-bg dark:bg-warm-bg-dark rounded-lg p-1">
+        <div className="grid md:grid-cols-2 gap-4 px-6 pb-8">
+          {/* Free */}
+          <div className="rounded-xl border border-border dark:border-border-dark p-6 flex flex-col">
+            <h3 className="font-display text-lg font-bold">Free</h3>
+            <div className="mt-3 mb-1">
+              <span className="text-3xl font-bold">$0</span>
+              <span className="text-sm text-text-secondary dark:text-text-secondary-dark ml-1">forever</span>
+            </div>
+            <ul className="flex-1 space-y-2.5 my-5">
+              {FREE_FEATURES.map((f, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">{CHECK}<span>{f}</span></li>
+              ))}
+            </ul>
             <button
-              onClick={() => setBilling('monthly')}
-              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                billing === 'monthly'
-                  ? 'bg-surface dark:bg-surface-dark shadow-sm'
-                  : 'text-text-secondary dark:text-text-secondary-dark'
-              }`}
+              onClick={onClose}
+              className="w-full py-2.5 rounded-lg text-sm font-medium border border-border dark:border-border-dark hover:bg-warm-bg dark:hover:bg-warm-bg-dark transition-colors"
             >
-              {t('pricing.monthly')}
+              {isPlus ? 'Current: Plus' : 'Get started free'}
             </button>
+          </div>
+
+          {/* Plus */}
+          <div className="rounded-xl border-2 border-accent p-6 flex flex-col relative shadow-md ring-1 ring-accent/20">
+            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-white text-xs font-semibold px-3 py-0.5 rounded-full">
+              Recommended
+            </div>
+            <h3 className="font-display text-lg font-bold">Plus</h3>
+            <div className="mt-3 mb-1">
+              <span className="text-3xl font-bold">$99</span>
+              <span className="text-sm text-text-secondary dark:text-text-secondary-dark ml-1">/year</span>
+            </div>
+            <ul className="flex-1 space-y-2.5 my-5">
+              {PLUS_FEATURES.map((f, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">{CHECK}<span>{f}</span></li>
+              ))}
+            </ul>
             <button
-              onClick={() => setBilling('annual')}
-              className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
-                billing === 'annual'
-                  ? 'bg-surface dark:bg-surface-dark shadow-sm'
-                  : 'text-text-secondary dark:text-text-secondary-dark'
+              onClick={handleUpgrade}
+              disabled={isPlus || loading}
+              className={`w-full py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                isPlus
+                  ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-default'
+                  : 'bg-accent hover:bg-accent-hover text-white'
               }`}
             >
-              {t('pricing.annual')}
+              {isPlus ? 'Current plan' : loading ? 'Loading...' : 'Start with 3 free Plus sessions'}
             </button>
           </div>
         </div>
 
-        {/* Plans grid */}
-        <div className="grid md:grid-cols-3 gap-4 px-6 pb-8">
-          {plans.map((plan) => (
-            <div
-              key={plan.id}
-              className={`relative rounded-xl border p-6 flex flex-col ${
-                plan.highlight
-                  ? 'border-accent shadow-md ring-1 ring-accent/20'
-                  : 'border-border dark:border-border-dark'
-              }`}
-            >
-              {plan.highlight && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-accent text-white text-xs font-semibold px-3 py-0.5 rounded-full">
-                  {t('pricing.popular')}
-                </div>
-              )}
-
-              <h3 className="font-display text-lg font-bold">{plan.name}</h3>
-
-              <div className="mt-3 mb-1">
-                <span className="text-3xl font-bold">{plan.price}</span>
-                <span className="text-sm text-text-secondary dark:text-text-secondary-dark ml-1">
-                  {plan.period}
-                </span>
-              </div>
-
-              {plan.savings && (
-                <p className="text-xs text-green-600 dark:text-green-400 font-medium mb-3">
-                  {plan.savings}
-                </p>
-              )}
-
-              <ul className="flex-1 space-y-2.5 my-5">
-                {plan.features.map((feature, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm">
-                    <svg className="w-4 h-4 mt-0.5 text-green-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                    <span>{feature}</span>
-                  </li>
-                ))}
-              </ul>
-
-              <button
-                onClick={() => handleCta(plan.id)}
-                disabled={plan.disabled}
-                className={`w-full py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  plan.disabled
-                    ? 'bg-gray-100 dark:bg-gray-800 text-gray-500 cursor-default'
-                    : plan.highlight
-                      ? 'bg-accent hover:bg-accent-hover text-white'
-                      : 'border border-border dark:border-border-dark hover:bg-warm-bg dark:hover:bg-warm-bg-dark'
-                }`}
-              >
-                {plan.cta}
-              </button>
-            </div>
-          ))}
+        <div className="px-6 pb-6 text-center">
+          <p className="text-xs text-text-secondary dark:text-text-secondary-dark">
+            Need it for your whole lab? Team pricing coming soon — <a href="mailto:hello@voilapcr.com" className="text-accent hover:underline">join the waitlist</a>.
+          </p>
         </div>
 
-        {/* Close button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-1 text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark transition-colors"

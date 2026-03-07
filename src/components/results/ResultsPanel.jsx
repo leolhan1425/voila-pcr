@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import useStore from '../../store/useStore'
 import useTier from '../../hooks/useTier'
+import { getTrialSessionsUsed, getTrialSessionsMax } from '../../api/usage'
 import DataTable from './DataTable'
 import BarChart from './BarChart'
 import ExportCSV from './ExportCSV'
@@ -18,7 +19,7 @@ export default function ResultsPanel() {
   const { t } = useTranslation()
   const store = useStore()
   const { results, reset, setGraphSettings } = store
-  const { canSeeFullQC } = useTier()
+  const { canSeeFullQC, isPlus, inTrialSession, trialRemaining } = useTier()
   const [tab, setTab] = useState('results')
   const [showShareBanner, setShowShareBanner] = useState(true)
 
@@ -38,6 +39,31 @@ export default function ResultsPanel() {
   return (
     <div>
       <QCRunner />
+
+      {/* Trial session banner */}
+      {inTrialSession && !isPlus && (
+        <div className="mb-4 px-4 py-2 rounded-lg bg-accent/10 border border-accent/20 flex items-center gap-2">
+          <span className="text-sm">&#10024;</span>
+          <span className="text-sm text-text-primary dark:text-text-primary-dark">
+            <span className="font-medium">Plus Trial</span> ({trialRemaining} of {getTrialSessionsMax()} remaining) — You're experiencing the full VoilaPCR Plus
+          </span>
+        </div>
+      )}
+
+      {/* Post-trial conversion prompt */}
+      {!isPlus && !inTrialSession && getTrialSessionsUsed() >= getTrialSessionsMax() && (
+        <div className="mb-4 p-4 rounded-lg border border-accent/30 bg-accent/5">
+          <p className="text-sm text-text-primary dark:text-text-primary-dark">
+            You've used your {getTrialSessionsMax()} Plus trials. Your analysis is complete — here are your results. To unlock the full QC report, Dr. qPCR, and publication-quality exports, upgrade to Plus for $99/year.
+          </p>
+          <button
+            onClick={() => store.setShowPricing(true)}
+            className="mt-3 px-5 py-2 bg-accent hover:bg-accent-hover text-white text-sm font-medium rounded-lg transition-colors"
+          >
+            Upgrade to Plus
+          </button>
+        </div>
+      )}
 
       <h2 className="font-display text-2xl sm:text-3xl font-bold">
         {t('results.title')}

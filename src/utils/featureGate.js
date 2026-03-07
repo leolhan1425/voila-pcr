@@ -1,10 +1,10 @@
 /**
  * Feature gating utility for VoilaPCR tiers.
- * Determines which features require Pro or Lab tier.
+ * Two tiers only: Free and Plus.
  */
 import { isDemoMode } from './demoMode'
 
-const PRO_FEATURES = [
+const PLUS_FEATURES = [
   'pfaffl',
   'genorm',
   'standardCurve',
@@ -19,35 +19,26 @@ const PRO_FEATURES = [
 ]
 
 /**
- * Check whether a feature is gated behind Pro tier.
+ * Check whether a feature is gated behind Plus tier.
  * In demo mode, nothing is gated.
- * @param {string} feature
- * @returns {boolean}
  */
-export function isProFeature(feature) {
+export function isPlusFeature(feature) {
   if (isDemoMode()) return false
-  return PRO_FEATURES.includes(feature)
-}
-
-/**
- * Return the minimum tier required for a given feature.
- * @param {string} feature
- * @returns {'free' | 'pro'}
- */
-export function requiresTier(feature) {
-  return isProFeature(feature) ? 'pro' : 'free'
+  return PLUS_FEATURES.includes(feature)
 }
 
 /**
  * Check if the user has access to a feature based on their tier.
  * @param {string} feature
- * @param {'free' | 'pro' | 'lab'} tier
+ * @param {'free' | 'plus'} tier
  * @returns {boolean}
  */
 export function hasAccess(feature, tier) {
   if (isDemoMode()) return true
-  if (tier === 'pro' || tier === 'lab') return true
-  return !PRO_FEATURES.includes(feature)
+  if (tier === 'plus') return true
+  return !PLUS_FEATURES.includes(feature)
 }
 
-export { PRO_FEATURES }
+// Legacy aliases
+export const isProFeature = isPlusFeature
+export { PLUS_FEATURES, PLUS_FEATURES as PRO_FEATURES }
