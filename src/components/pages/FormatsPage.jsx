@@ -10,6 +10,8 @@ const FORMATS = [
   { name: 'Roche LightCycler', maker: 'Roche', models: 'LightCycler 96, 480', formats: '.xlsx, .csv, .txt' },
   { name: 'QIAGEN Rotor-Gene Q', maker: 'QIAGEN / Corbett', models: 'Rotor-Gene Q, 6000', formats: '.xlsx, .csv' },
   { name: 'Agilent Stratagene Mx', maker: 'Agilent / Stratagene', models: 'Mx3000P, Mx3005P', formats: '.xls, .xlsx, .csv, .txt' },
+  { name: 'Eppendorf realplex', maker: 'Eppendorf', models: 'Mastercycler ep realplex, realplex4', formats: '.txt, .xls, .xlsx' },
+  { name: 'Mic qPCR', maker: 'Bio Molecular Systems', models: 'Mic (48-well rotary)', formats: '.csv' },
   { name: 'Fluidigm BioMark', maker: 'Standard BioTools (Fluidigm)', models: 'BioMark HD, EP1', formats: '.csv, .xlsx' },
   { name: 'Generic CSV', maker: 'Any instrument', models: 'Any machine with CSV export', formats: '.csv' },
 ]
