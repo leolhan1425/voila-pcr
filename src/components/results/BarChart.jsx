@@ -2,28 +2,43 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import LazyPlot from './LazyPlot'
 import useStore from '../../store/useStore'
+import GraphCustomizer from './GraphCustomizer'
 
-// Prism-style grayscale palette
 const GRAY_PALETTE = [
   '#1a1a1a', '#666666', '#999999', '#bbbbbb', '#dddddd',
   '#444444', '#777777', '#aaaaaa', '#cccccc',
 ]
 
+const JOURNAL_PRESETS = {
+  nature: { font: 'Arial', fontSize: 7, width: 3.5, height: 2.5 },
+  cell: { font: 'Helvetica', fontSize: 8, width: 3.4, height: 2.5 },
+  plos: { font: 'Arial', fontSize: 8, width: 5.2, height: 3.5 },
+}
+
 export default function BarChart() {
   const { t } = useTranslation()
-  const { results, config } = useStore()
+  const { results, config, tier, graphSettings, setShowUpgradePrompt } = useStore()
   const [errorBarType, setErrorBarType] = useState('sem')
   const [showDataPoints, setShowDataPoints] = useState(true)
+  const [showCustomizer, setShowCustomizer] = useState(false)
 
   if (!results) return null
 
   const { summary, statistics } = results
   const targets = Object.keys(summary)
 
+  const handleToggleCustomizer = () => {
+    if (tier === 'free') {
+      setShowUpgradePrompt('graphCustomizer')
+      return
+    }
+    setShowCustomizer(!showCustomizer)
+  }
+
   return (
     <div className="space-y-10">
       {/* Chart controls */}
-      <div className="flex flex-wrap gap-4 text-sm">
+      <div className="flex flex-wrap gap-4 text-sm items-center">
         <label className="flex items-center gap-2">
           <span className="text-text-secondary dark:text-text-secondary-dark">Error bars:</span>
           <select
@@ -44,7 +59,36 @@ export default function BarChart() {
           />
           <span className="text-text-secondary dark:text-text-secondary-dark">Show individual data points</span>
         </label>
+        <button
+          onClick={handleToggleCustomizer}
+          className="ml-auto flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border dark:border-border-dark rounded-lg hover:border-accent transition-colors"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+          </svg>
+          {t('results.customize')}
+          {tier === 'free' && <span className="text-[10px] px-1 py-0.5 bg-accent/10 text-accent rounded">Pro</span>}
+        </button>
       </div>
+
+      {showCustomizer && tier !== 'free' && (
+        <GraphCustomizer
+          target="_global"
+          onUpdate={(settings) => {
+            useStore.getState().setGraphSettings('_global', {
+              font: `${settings.fontFamily}, sans-serif`,
+              fontSize: settings.fontSize,
+              width: settings.width,
+              height: settings.height,
+              yScale: settings.yScale,
+              showBrackets: settings.showSignificance,
+              xLabel: settings.xAxisLabel,
+              yLabel: settings.yAxisLabel,
+              colors: Object.values(settings.groupColors || {}),
+            })
+          }}
+        />
+      )}
 
       {/* One chart per target gene */}
       {targets.map((target) => (
@@ -57,6 +101,7 @@ export default function BarChart() {
           errorBarType={errorBarType}
           showDataPoints={showDataPoints}
           yAxisLabel={t('results.yAxisLabel')}
+          customSettings={graphSettings[target] || graphSettings._global || {}}
         />
       ))}
 
@@ -69,17 +114,30 @@ export default function BarChart() {
   )
 }
 
-function SingleTargetChart({ target, groups, stats, controlGroup, errorBarType, showDataPoints, yAxisLabel }) {
+function SingleTargetChart({ target, groups, stats, controlGroup, errorBarType, showDataPoints, yAxisLabel, customSettings }) {
   const groupNames = Object.keys(groups)
   const traces = []
   const annotations = []
 
-  // Bar trace — each group gets its own color from grayscale palette
+  const {
+    font = 'Arial, Helvetica, sans-serif',
+    fontSize = 12,
+    width,
+    height,
+    yScale = 'linear',
+    showBrackets = true,
+    colors: customColors,
+    xLabel = '',
+    yLabel,
+  } = customSettings
+
   const y = groupNames.map((g) => groups[g].mean)
   const errorVals = groupNames.map((g) =>
     errorBarType === 'sem' ? groups[g].sem : groups[g].sd
   )
-  const colors = groupNames.map((_, i) => GRAY_PALETTE[i % GRAY_PALETTE.length])
+  const colors = customColors
+    ? groupNames.map((_, i) => customColors[i] || GRAY_PALETTE[i % GRAY_PALETTE.length])
+    : groupNames.map((_, i) => GRAY_PALETTE[i % GRAY_PALETTE.length])
 
   traces.push({
     type: 'bar',
@@ -98,10 +156,9 @@ function SingleTargetChart({ target, groups, stats, controlGroup, errorBarType, 
       line: { color: '#000000', width: 0 },
     },
     showlegend: false,
-    hovertemplate: '%{x}<br>Mean: %{y:.3f}<br>±%{error_y.array:.3f}<extra></extra>',
+    hovertemplate: '%{x}<br>Mean: %{y:.3f}<br>+/-%{error_y.array:.3f}<extra></extra>',
   })
 
-  // Individual data points overlay
   if (showDataPoints) {
     for (const group of groupNames) {
       const vals = groups[group].values
@@ -122,9 +179,7 @@ function SingleTargetChart({ target, groups, stats, controlGroup, errorBarType, 
     }
   }
 
-  // Significance annotations above bars
-  if (stats) {
-    // Find the max bar height + error bar for positioning
+  if (stats && showBrackets !== false) {
     const maxBarTop = Math.max(
       ...groupNames.map((g, i) => y[i] + (errorVals[i] || 0))
     )
@@ -132,48 +187,47 @@ function SingleTargetChart({ target, groups, stats, controlGroup, errorBarType, 
 
     for (const [group, stat] of Object.entries(stats)) {
       if (group === controlGroup) continue
-      const label = stat.stars === 'ns'
-        ? 'ns'
-        : stat.stars
+      const label = stat.stars === 'ns' ? 'ns' : stat.stars
       annotations.push({
         x: group,
         y: annotY,
         text: `<b>${label}</b>`,
         showarrow: false,
-        font: { size: label === 'ns' ? 10 : 14, family: 'Arial', color: '#000' },
+        font: { size: label === 'ns' ? 10 : 14, family: font, color: '#000' },
         yanchor: 'bottom',
       })
     }
   }
 
-  // Calculate y-axis max to leave room for annotations
   const maxVal = Math.max(...groupNames.map((g, i) => y[i] + (errorVals[i] || 0)))
   const yMax = annotations.length > 0 ? maxVal * 1.25 : undefined
+
+  const finalYLabel = yLabel || yAxisLabel
 
   const layout = {
     title: {
       text: `<b>${target}</b>`,
-      font: { family: 'Arial, Helvetica, sans-serif', size: 18, color: '#000' },
+      font: { family: font, size: fontSize + 6, color: '#000' },
       x: 0.5,
       xanchor: 'center',
     },
-    font: { family: 'Arial, Helvetica, sans-serif', size: 12, color: '#000' },
+    font: { family: font, size: fontSize, color: '#000' },
     paper_bgcolor: '#ffffff',
     plot_bgcolor: '#ffffff',
     showlegend: false,
     xaxis: {
-      title: { text: '', standoff: 15 },
+      title: { text: xLabel, standoff: 15 },
       showgrid: false,
       zeroline: false,
       linecolor: '#000',
       linewidth: 2,
-      tickfont: { size: 12, family: 'Arial', color: '#000' },
+      tickfont: { size: fontSize, family: font, color: '#000' },
       tickangle: groupNames.some((g) => g.length > 8) ? -45 : 0,
     },
     yaxis: {
       title: {
-        text: `<b>${yAxisLabel}</b>`,
-        font: { size: 13, family: 'Arial', color: '#000' },
+        text: `<b>${finalYLabel}</b>`,
+        font: { size: fontSize + 1, family: font, color: '#000' },
         standoff: 10,
       },
       showgrid: false,
@@ -182,27 +236,28 @@ function SingleTargetChart({ target, groups, stats, controlGroup, errorBarType, 
       linewidth: 2,
       rangemode: 'tozero',
       range: yMax ? [0, yMax] : undefined,
-      tickfont: { size: 11, family: 'Arial', color: '#000' },
+      tickfont: { size: fontSize - 1, family: font, color: '#000' },
       ticks: 'outside',
       ticklen: 5,
       tickwidth: 2,
       tickcolor: '#000',
+      type: yScale === 'log2' ? 'log' : 'linear',
     },
     annotations,
     margin: { l: 70, r: 30, t: 50, b: groupNames.some((g) => g.length > 8) ? 80 : 50 },
     bargap: 0.35,
   }
 
+  const chartWidth = width ? `${width * 96}px` : '100%'
+  const chartHeight = height ? `${height * 96}px` : '420px'
+
   return (
     <div id={`voila-chart-${target}`}>
       <LazyPlot
         data={traces}
         layout={layout}
-        config={{
-          responsive: true,
-          displayModeBar: false,
-        }}
-        style={{ width: '100%', height: '420px' }}
+        config={{ responsive: !width, displayModeBar: false }}
+        style={{ width: chartWidth, height: chartHeight }}
       />
     </div>
   )

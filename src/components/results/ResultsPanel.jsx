@@ -1,24 +1,33 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
 import useStore from '../../store/useStore'
 import DataTable from './DataTable'
 import BarChart from './BarChart'
-import QCSummary from './QCSummary'
 import ExportCSV from './ExportCSV'
 import ExportGraph from './ExportGraph'
+import QCSummaryBadge from '../qc/QCSummaryBadge'
+import QCFullReport from '../qc/QCFullReport'
+import QCRunner from '../qc/QCRunner'
 
 const TABS = ['chart', 'dataTable', 'qc']
-const TAB_LABELS = { chart: 'Chart', dataTable: 'Data Table', qc: 'QC Report' }
 
 export default function ResultsPanel() {
   const { t } = useTranslation()
-  const { results, reset } = useStore()
+  const { results, reset, tier } = useStore()
   const [tab, setTab] = useState('chart')
 
   if (!results) return null
 
+  const tabLabels = {
+    chart: t('results.chart'),
+    dataTable: t('results.dataTable'),
+    qc: t('results.qcReport'),
+  }
+
   return (
     <div>
+      <QCRunner />
+
       <h2 className="font-display text-2xl sm:text-3xl font-bold">
         {t('results.title')}
       </h2>
@@ -35,7 +44,7 @@ export default function ResultsPanel() {
                 : 'border-transparent text-text-secondary dark:text-text-secondary-dark hover:text-text-primary dark:hover:text-text-primary-dark'
             }`}
           >
-            {TAB_LABELS[key]}
+            {tabLabels[key]}
           </button>
         ))}
       </div>
@@ -44,7 +53,9 @@ export default function ResultsPanel() {
       <div className="mt-6">
         {tab === 'chart' && <BarChart />}
         {tab === 'dataTable' && <DataTable />}
-        {tab === 'qc' && <QCSummary />}
+        {tab === 'qc' && (
+          tier === 'free' ? <QCSummaryBadge /> : <QCFullReport />
+        )}
       </div>
 
       {/* Export buttons */}

@@ -3,9 +3,15 @@ import { useTranslation } from 'react-i18next'
 import useStore from '../../store/useStore'
 import { autoClassifySamples, runQC } from '../../analysis/qc'
 import { analyzeDdct } from '../../analysis/ddct'
+import { analyzePfaffl } from '../../analysis/pfaffl'
+import { analyzeStandardCurve } from '../../analysis/standardCurve'
+import { analyzeGeNorm } from '../../analysis/genorm'
 import SampleClassifier from './SampleClassifier'
 import QCReport from './QCReport'
 import WellExclusion from './WellExclusion'
+import MethodSelector from './MethodSelector'
+import AdvancedOptions from './AdvancedOptions'
+import { getMonthlyUsage, incrementUsage } from '../../api/usage'
 
 export default function ConfigPanel() {
   const { t } = useTranslation()
@@ -13,17 +19,16 @@ export default function ConfigPanel() {
     parsedData, config, setConfig,
     sampleRoles, setSampleRoles,
     qcReport, setQcReport,
-    setResults, setStep,
+    setResults, setStep, tier,
+    setShowUpgradePrompt,
   } = useStore()
 
-  // Auto-classify on first load
   useEffect(() => {
     if (parsedData && Object.keys(sampleRoles).length === 0) {
       setSampleRoles(autoClassifySamples(parsedData.samples))
     }
   }, [parsedData, sampleRoles, setSampleRoles])
 
-  // Run QC whenever roles or data change
   useEffect(() => {
     if (parsedData && Object.keys(sampleRoles).length > 0) {
       const report = runQC(parsedData, sampleRoles, {
@@ -36,26 +41,49 @@ export default function ConfigPanel() {
 
   if (!parsedData) return null
 
-  // Only experimental samples for group/gene selection
   const expSamples = parsedData.samples.filter((s) => sampleRoles[s] === 'experimental')
   const expGroups = [...new Set(expSamples.map((s) => s.replace(/[\s_-]\d+$/, '')))]
   const hasStandards = Object.values(sampleRoles).some((r) => r === 'standard')
 
   const handleAnalyze = () => {
-    // Filter data to experimental samples only
+    // Check free tier usage
+    if (tier === 'free' && getMonthlyUsage() >= 3) {
+      setShowUpgradePrompt('unlimited')
+      return
+    }
+
     const filteredData = {
       ...parsedData,
       wells: parsedData.wells.filter((w) => sampleRoles[w.sample] === 'experimental' && !w._excluded),
       samples: expSamples,
       groups: expGroups,
     }
-    const results = analyzeDdct(filteredData, config)
+
+    let results
+    switch (config.method) {
+      case 'pfaffl':
+        results = analyzePfaffl(filteredData, config)
+        break
+      case 'standardCurve':
+        results = analyzeStandardCurve(filteredData, config)
+        break
+      case 'genorm':
+        results = analyzeGeNorm(filteredData, config)
+        break
+      default:
+        results = analyzeDdct(filteredData, config)
+    }
+
     results.qcReport = qcReport
     setResults(results)
     setStep('results')
+
+    if (tier === 'free') incrementUsage()
   }
 
-  const canAnalyze = config.referenceGene && config.controlGroup
+  const canAnalyze = config.method === 'genorm'
+    ? config.referenceGenes?.length >= 2 && config.controlGroup
+    : config.referenceGene && config.controlGroup
 
   return (
     <div>
@@ -63,48 +91,33 @@ export default function ConfigPanel() {
         {t('configure.title')}
       </h2>
 
-      {/* Sample Classification */}
       <SampleClassifier />
 
-      {/* Standard curve dilution factor */}
       {hasStandards && (
         <div className="mt-6">
-          <label className="block text-sm font-medium mb-2">Standard curve dilution factor</label>
-          <div className="flex items-center gap-3">
-            <select
-              value={config.dilutionFactor}
-              onChange={(e) => setConfig({ dilutionFactor: parseInt(e.target.value) })}
-              className="px-3 py-2 border border-border dark:border-border-dark rounded-lg bg-surface dark:bg-surface-dark font-mono text-sm"
-            >
-              <option value={2}>1:2 serial dilution</option>
-              <option value={5}>1:5 serial dilution</option>
-              <option value={10}>1:10 serial dilution</option>
-            </select>
-          </div>
+          <label className="block text-sm font-medium mb-2">{t('configure.dilutionFactor')}</label>
+          <select
+            value={config.dilutionFactor}
+            onChange={(e) => setConfig({ dilutionFactor: parseInt(e.target.value) })}
+            className="px-3 py-2 border border-border dark:border-border-dark rounded-lg bg-surface dark:bg-surface-dark font-mono text-sm"
+          >
+            <option value={2}>1:2 serial dilution</option>
+            <option value={5}>1:5 serial dilution</option>
+            <option value={10}>1:10 serial dilution</option>
+          </select>
         </div>
       )}
 
-      {/* QC Report */}
       {qcReport && <QCReport />}
-
-      {/* Well Exclusion */}
       <WellExclusion />
 
       <hr className="my-8 border-border dark:border-border-dark" />
 
-      {/* Analysis Configuration */}
-      <h3 className="font-display text-xl font-bold mb-4">{t('configure.method')}</h3>
+      <MethodSelector />
 
-      <div className="space-y-6">
-        {/* Method */}
-        <div>
-          <div className="inline-flex items-center gap-2 px-4 py-2 bg-surface dark:bg-surface-dark border border-border dark:border-border-dark rounded-lg">
-            <span className="font-mono text-sm">{t('configure.methodDdct')}</span>
-          </div>
-        </div>
-
-        {/* Reference Gene */}
-        <div>
+      {/* Reference Gene */}
+      {config.method !== 'genorm' ? (
+        <div className="mt-6">
           <label className="block text-sm font-medium mb-2">{t('configure.referenceGene')}</label>
           <div className="flex flex-wrap gap-2">
             {parsedData.targets.map((target) => (
@@ -125,56 +138,57 @@ export default function ConfigPanel() {
             ))}
           </div>
         </div>
-
-        {/* Control Group */}
-        <div>
-          <label className="block text-sm font-medium mb-2">{t('configure.controlGroup')}</label>
+      ) : (
+        <div className="mt-6">
+          <label className="block text-sm font-medium mb-2">{t('configure.referenceGenes')}</label>
           <div className="flex flex-wrap gap-2">
-            {expGroups.map((group) => (
+            {parsedData.targets.map((target) => (
               <button
-                key={group}
-                onClick={() => setConfig({ controlGroup: group })}
-                className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
-                  config.controlGroup === group
+                key={target}
+                onClick={() => {
+                  const current = config.referenceGenes || []
+                  const updated = current.includes(target)
+                    ? current.filter((t) => t !== target)
+                    : [...current, target]
+                  setConfig({ referenceGenes: updated })
+                }}
+                className={`px-4 py-2 rounded-lg border text-sm font-mono transition-colors ${
+                  (config.referenceGenes || []).includes(target)
                     ? 'border-accent bg-accent text-white'
                     : 'border-border dark:border-border-dark hover:border-accent/50 bg-surface dark:bg-surface-dark'
                 }`}
               >
-                {group}
+                {target}
               </button>
             ))}
           </div>
-        </div>
-
-        {/* Replicate Handling */}
-        <div className="space-y-3">
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={config.autoAverage}
-              onChange={(e) => setConfig({ autoAverage: e.target.checked })}
-              className="accent-accent"
-            />
-            {t('configure.autoAverage')}
-          </label>
-          {config.autoAverage && (
-            <div className="flex items-center gap-3">
-              <label className="text-sm text-text-secondary dark:text-text-secondary-dark">
-                {t('configure.outlierThreshold')}
-              </label>
-              <input
-                type="number"
-                step="0.1"
-                min="0.1"
-                max="5"
-                value={config.outlierThreshold}
-                onChange={(e) => setConfig({ outlierThreshold: parseFloat(e.target.value) })}
-                className="w-20 px-2 py-1 border border-border dark:border-border-dark rounded bg-surface dark:bg-surface-dark font-mono text-sm"
-              />
-            </div>
+          {(config.referenceGenes || []).length < 2 && (
+            <p className="mt-2 text-xs text-text-secondary dark:text-text-secondary-dark">Select at least 2 candidate reference genes.</p>
           )}
         </div>
+      )}
+
+      {/* Control Group */}
+      <div className="mt-6">
+        <label className="block text-sm font-medium mb-2">{t('configure.controlGroup')}</label>
+        <div className="flex flex-wrap gap-2">
+          {expGroups.map((group) => (
+            <button
+              key={group}
+              onClick={() => setConfig({ controlGroup: group })}
+              className={`px-4 py-2 rounded-lg border text-sm transition-colors ${
+                config.controlGroup === group
+                  ? 'border-accent bg-accent text-white'
+                  : 'border-border dark:border-border-dark hover:border-accent/50 bg-surface dark:bg-surface-dark'
+              }`}
+            >
+              {group}
+            </button>
+          ))}
+        </div>
       </div>
+
+      <AdvancedOptions targets={parsedData.targets} />
 
       <div className="mt-10 flex items-center gap-4">
         <button
